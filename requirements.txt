@@ -1,0 +1,27 @@
+# AI Interview Platform Dependencies
+# Audio recording and processing
+pyaudio>=0.2.11
+pydub>=0.25.1  # For MP3 encoding and audio processing
+
+# Keyboard input handling
+keyboard>=0.13.5
+
+# Speech-to-Text functionality
+openai>=1.3.0
+python-dotenv>=1.0.0
+
+# Text-to-Speech functionality
+elevenlabs>=0.2.26
+pygame>=2.5.0  # For audio playback
+
+# System and file handling (built-in modules)
+# os, sys, threading, datetime, pathlib, time
+
+# Optional: Enhanced audio processing
+# sounddevice>=0.4.6  # Alternative to pyaudio
+# numpy>=1.21.0       # For audio data processing
+
+# Development dependencies (optional)
+# pytest>=7.0.0       # For testing
+# black>=22.0.0       # Code formatting
+# flake8>=4.0.0       # Code linting
