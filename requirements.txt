@@ -14,6 +14,11 @@ python-dotenv>=1.0.0
 elevenlabs>=0.2.26
 pygame>=2.5.0  # For audio playback
 
+# AI Agents functionality
+openai>=1.3.0  # Already included for STT
+openai-agents>=0.1.0  # OpenAI Agents SDK
+pydantic>=2.0.0  # For output type validation
+
 # System and file handling (built-in modules)
 # os, sys, threading, datetime, pathlib, time
 

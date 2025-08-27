@@ -75,7 +75,7 @@ class VoiceProfile:
         self.professional_level = professional_level
         
         # Default customization settings
-        self.speed = 2.0                # default  = 1.0
+        self.speed = 1.0                # default  = 1.0 (normal speed)
         self.clarity = 0.75             # default  = 0.75
         self.volume = 0.8               # default  = 0.8
         

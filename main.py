@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import threading
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -21,17 +22,20 @@ except ImportError as e:
 from config.settings import AudioConfig, STTConfig
 from services.stt_service import STTService
 from services.tts_service import TTSService
+from services.agent_service import AgentService
 
 
 class AudioRecorder:
     """Handles audio recording with spacebar control and STT integration."""
     
-    def __init__(self, stt_service=None, tts_service=None):
+    def __init__(self, stt_service=None, tts_service=None, agent_service=None):
         self.audio = pyaudio.PyAudio()
         self.config = AudioConfig()
         self.stt_config = STTConfig()
         self.stt_service = stt_service
         self.tts_service = tts_service
+        self.agent_service = agent_service
+        self.minimal_logging = False
         self.is_recording = False
         self.recording_thread = None
         self.transcription_thread = None
@@ -91,7 +95,8 @@ class AudioRecorder:
         self.frames = []
         self.current_filename = self.generate_filename()
         
-        print(f"Interview Platform: Recording started - {self.current_filename}")
+        if not self.minimal_logging:
+            print(f"Interview Platform: Recording started - {self.current_filename}")
         
         # Start recording thread
         self.recording_thread = threading.Thread(target=self._record_audio)
@@ -112,7 +117,8 @@ class AudioRecorder:
         # Save the recording
         if self.frames:
             self._save_recording()
-            print(f"Interview Platform: Recording saved - {self.current_filename}")
+            if not self.minimal_logging:
+                print(f"Interview Platform: Recording saved - {self.current_filename}")
             
             # Start transcription if STT is enabled
             if (self.stt_service and 
@@ -172,17 +178,15 @@ class AudioRecorder:
                     parameters=["-q:a", str(self.config.MP3_QUALITY)]
                 )
                 
-                # Display file info
-                file_size = os.path.getsize(self.current_filepath)
-                duration = len(self.frames) * self.config.CHUNK / self.config.RATE
-                
-                # Calculate compression ratio (compared to WAV)
-                wav_size = len(self.frames) * self.config.CHUNK * self.audio.get_sample_size(self.config.FORMAT) * self.config.CHANNELS
-                compression_ratio = wav_size / file_size if file_size > 0 else 1
-                
-                print(f"Interview Platform: File size: {file_size:,} bytes, Duration: {duration:.1f}s")
-                print(f"Interview Platform: MP3 compression ratio: {compression_ratio:.1f}x smaller than WAV")
-                print(f"Interview Platform: Expected latency improvement: {min(50, (1 - 1/compression_ratio) * 100):.0f}% faster uploads")
+                # Display file info (suppressed in minimal logging)
+                if not self.minimal_logging:
+                    file_size = os.path.getsize(self.current_filepath)
+                    duration = len(self.frames) * self.config.CHUNK / self.config.RATE
+                    wav_size = len(self.frames) * self.config.CHUNK * self.audio.get_sample_size(self.config.FORMAT) * self.config.CHANNELS
+                    compression_ratio = wav_size / file_size if file_size > 0 else 1
+                    print(f"Interview Platform: File size: {file_size:,} bytes, Duration: {duration:.1f}s")
+                    print(f"Interview Platform: MP3 compression ratio: {compression_ratio:.1f}x smaller than WAV")
+                    print(f"Interview Platform: Expected latency improvement: {min(50, (1 - 1/compression_ratio) * 100):.0f}% faster uploads")
                 
             except ImportError:
                 print("Interview Platform: Warning - pydub not available, falling back to WAV format")
@@ -196,9 +200,10 @@ class AudioRecorder:
                 self.current_filepath = self.current_filepath.replace('.mp3', '.wav')
                 self.current_filename = self.current_filename.replace('.mp3', '.wav')
                 
-                file_size = os.path.getsize(self.current_filepath)
-                duration = len(self.frames) * self.config.CHUNK / self.config.RATE
-                print(f"Interview Platform: WAV fallback - File size: {file_size:,} bytes, Duration: {duration:.1f}s")
+                if not self.minimal_logging:
+                    file_size = os.path.getsize(self.current_filepath)
+                    duration = len(self.frames) * self.config.CHUNK / self.config.RATE
+                    print(f"Interview Platform: WAV fallback - File size: {file_size:,} bytes, Duration: {duration:.1f}s")
             
         except Exception as e:
             print(f"Interview Platform: Error saving recording - {e}")
@@ -210,7 +215,8 @@ class AudioRecorder:
             print("Interview Platform: Previous transcription still in progress")
             return
         
-        print("Interview Platform: Starting transcription...")
+        if not self.minimal_logging:
+            print("Interview Platform: Starting transcription...")
         self.transcription_thread = threading.Thread(target=self._transcribe_audio)
         self.transcription_thread.daemon = True
         self.transcription_thread.start()
@@ -229,12 +235,18 @@ class AudioRecorder:
                 transcription_text = result["text"]
                 processing_time = result["processing_time"]
                 
-                print(f"Interview Platform: Transcription completed in {processing_time:.2f}s")
-                print(f"Interview Platform: Transcribed text: \"{transcription_text}\"")
+                if not self.minimal_logging:
+                    print(f"Interview Platform: Transcription completed in {processing_time:.2f}s")
+                # Always print the transcribed text
+                print(f"You: {transcription_text}")
                 
-                # Voice feedback - repeat what was said
-                if self.tts_service:
-                    self._voice_feedback(transcription_text)
+                # Voice feedback (disabled): do not repeat what the user said
+                # if self.tts_service:
+                #     self._voice_feedback(transcription_text)
+                
+                # Process with AI Agent if available
+                if self.agent_service:
+                    self._process_with_agent(transcription_text)
                 
                 # Save transcript if enabled
                 if self.stt_config.SAVE_TRANSCRIPTS:
@@ -309,6 +321,56 @@ class AudioRecorder:
         except Exception as e:
             print(f"Interview Platform: Voice feedback error - {e}")
     
+    def _process_with_agent(self, text: str):
+        """Process transcribed text with AI Agent."""
+        try:
+            if not self.agent_service:
+                return
+                
+            if not self.minimal_logging:
+                print("Interview Platform: Processing with AI Agent...")
+            
+            # Get the default agent (Interview Assistant)
+            agent = self.agent_service.get_agent("Interview Assistant")
+            if not agent:
+                print("Interview Platform: No AI Agent available for processing")
+                return
+            
+            # Process the request asynchronously
+            import asyncio
+            try:
+                # Create new event loop for this thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                # Process with agent
+                response = loop.run_until_complete(
+                    agent.process_request(text, {"source": "audio_transcription"})
+                )
+                
+                if response and response.success:
+                    # Always print the agent's text response
+                    print(f"Agent: {response.content}")
+                    
+                    # Optionally use TTS to speak the agent response
+                    if self.tts_service:
+                        if not self.minimal_logging:
+                            print("Interview Platform: Speaking AI Agent response...")
+                        tts_result = self.tts_service.generate_speech(response.content, play_immediately=True)
+                        if not tts_result["success"]:
+                            print(f"Interview Platform: Failed to speak AI Agent response: {tts_result.get('error', 'Unknown error')}")
+                else:
+                    error_msg = response.error if response else "No response from agent"
+                    print(f"Interview Platform: AI Agent processing failed - {error_msg}")
+                
+                loop.close()
+                
+            except Exception as e:
+                print(f"Interview Platform: AI Agent processing error - {e}")
+                
+        except Exception as e:
+            print(f"Interview Platform: AI Agent processing error - {e}")
+    
     def cleanup(self):
         """Clean up PyAudio resources."""
         if self.is_recording:
@@ -326,7 +388,8 @@ class AudioRecorder:
 class InterviewPlatform:
     """Main application class for the AI Interview Platform."""
     
-    def __init__(self):
+    def __init__(self, minimal_logging: bool = True):
+        self.minimal_logging = minimal_logging
         # Initialize STT service if enabled
         self.stt_service = None
         stt_config = STTConfig()
@@ -348,7 +411,23 @@ class InterviewPlatform:
             print(f"Interview Platform: TTS service initialization failed - {e}")
             print("Interview Platform: Continuing without TTS functionality")
         
-        self.recorder = AudioRecorder(stt_service=self.stt_service, tts_service=self.tts_service)
+        # Initialize AI Agent service
+        self.agent_service = None
+        try:
+            self.agent_service = AgentService()
+            # Create default interview agent
+            interview_agent = self.agent_service.create_agent("echo", "Interview Assistant")
+            if interview_agent:
+                print("Interview Platform: AI Agent service initialized with Interview Assistant")
+            else:
+                print("Interview Platform: AI Agent creation failed")
+                self.agent_service = None
+        except Exception as e:
+            print(f"Interview Platform: AI Agent service initialization failed - {e}")
+            print("Interview Platform: Continuing without AI Agent functionality")
+        
+        self.recorder = AudioRecorder(stt_service=self.stt_service, tts_service=self.tts_service, agent_service=self.agent_service)
+        self.recorder.minimal_logging = self.minimal_logging
         self.running = False
     
     def display_welcome(self):
@@ -359,6 +438,8 @@ class InterviewPlatform:
             print("    with Speech-to-Text Transcription")
         if self.tts_service:
             print("    with Voice Feedback (repeats what you say)")
+        if self.agent_service:
+            print("    with AI Agent Processing (Interview Assistant)")
         print("=" * 60)
         print("\nControls:")
         print("  SPACEBAR (hold) : Start/Stop recording")
@@ -404,6 +485,11 @@ class InterviewPlatform:
     def run(self):
         """Main application loop."""
         try:
+            # Reduce verbosity of internal service loggers when minimal logging is enabled
+            if self.minimal_logging:
+                for logger_name in ["STTService", "TTSService", "AgentService"]:
+                    logging.getLogger(logger_name).setLevel(logging.ERROR)
+            
             # Check microphone access
             if not self.recorder.check_microphone_access():
                 return
@@ -430,6 +516,38 @@ class InterviewPlatform:
                     self.tts_service = None
                     self.recorder.tts_service = None
             
+            # Test AI Agent service connection if enabled
+            if self.agent_service:
+                print("Interview Platform: Testing AI Agent service connection...")
+                try:
+                    # Test with a simple request
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    test_agent = self.agent_service.get_agent("Interview Assistant")
+                    if test_agent:
+                        test_response = loop.run_until_complete(
+                            test_agent.process_request("Hello, this is a test.", {"test": True})
+                        )
+                        if test_response and test_response.success:
+                            print("Interview Platform: AI Agent service ready")
+                            print(f"   Test response: {test_response.content[:100]}...")
+                        else:
+                            print("Interview Platform: AI Agent test failed")
+                            self.agent_service = None
+                            self.recorder.agent_service = None
+                        loop.close()
+                    else:
+                        print("Interview Platform: AI Agent not found")
+                        self.agent_service = None
+                        self.recorder.agent_service = None
+                except Exception as e:
+                    print(f"Interview Platform: AI Agent service test failed - {e}")
+                    print("Interview Platform: Continuing without AI Agent functionality")
+                    self.agent_service = None
+                    self.recorder.agent_service = None
+            
             # Display welcome message
             self.display_welcome()
             
@@ -451,6 +569,13 @@ class InterviewPlatform:
             # Cleanup
             self.recorder.cleanup()
             
+            # Clean up agent service
+            if self.agent_service:
+                try:
+                    self.agent_service.cleanup()
+                except Exception as e:
+                    print(f"Interview Platform: Agent service cleanup error - {e}")
+            
             # Display final statistics if STT was used
             if self.stt_service:
                 stats = self.stt_service.get_stats()
@@ -470,6 +595,16 @@ class InterviewPlatform:
                     print(f"  Average processing time: {stats['average_processing_time']:.2f}s")
                     print(f"  Cache hits: {stats['cache_hits']}")
                     print(f"  Cache misses: {stats['cache_misses']}")
+            
+            # Display final statistics if AI Agent was used
+            if self.agent_service:
+                stats = self.agent_service.get_service_stats()
+                if stats["total_agent_requests"] > 0:
+                    print(f"\nInterview Platform: AI Agent Statistics:")
+                    print(f"  Total requests: {stats['total_agent_requests']}")
+                    print(f"  Success rate: {stats['success_rate']:.1%}")
+                    print(f"  Active agents: {stats['active_agents']}")
+                    print(f"  Sessions started: {stats['sessions_started']}")
             
             print("Interview Platform: Goodbye!")
 
