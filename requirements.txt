@@ -1,4 +1,7 @@
-# AI Interview Platform Dependencies
+# Enhanced AI Interview Platform Dependencies
+# Updated with advanced document analysis and interview planning capabilities
+
+# ===== CORE AUDIO DEPENDENCIES =====
 # Audio recording and processing
 pyaudio>=0.2.11
 pydub>=0.25.1  # For MP3 encoding and audio processing
@@ -6,7 +9,8 @@ pydub>=0.25.1  # For MP3 encoding and audio processing
 # Keyboard input handling
 keyboard>=0.13.5
 
-# Speech-to-Text functionality
+# ===== AI SERVICES DEPENDENCIES =====
+# OpenAI API for STT, document analysis, and interview planning
 openai>=1.3.0
 python-dotenv>=1.0.0
 
@@ -14,19 +18,185 @@ python-dotenv>=1.0.0
 elevenlabs>=0.2.26
 pygame>=2.5.0  # For audio playback
 
-# AI Agents functionality
-openai>=1.3.0  # Already included for STT
-openai-agents>=0.1.0  # OpenAI Agents SDK
-pydantic>=2.0.0  # For output type validation
+# ===== ENHANCED DOCUMENT PROCESSING =====
+# Document analysis and parsing
+PyPDF2>=3.0.1  # PDF document processing
+python-docx>=0.8.11  # Microsoft Word document processing
+pandas>=1.5.0  # Data manipulation and analysis
+openpyxl>=3.1.0  # Excel file support (optional)
 
-# System and file handling (built-in modules)
-# os, sys, threading, datetime, pathlib, time
+# ===== DATA MODELING AND VALIDATION =====
+# Structured data models and validation
+pydantic>=2.0.0  # For structured data models and validation
+typing-extensions>=4.5.0  # Enhanced typing support
 
-# Optional: Enhanced audio processing
+# ===== ASYNC AND CONCURRENT PROCESSING =====
+# Asynchronous programming support
+asyncio  # Built-in, but listed for clarity
+aiofiles>=23.1.0  # Asynchronous file operations (optional)
+
+# ===== UTILITIES AND HELPERS =====
+# JSON processing and utilities
+jsonschema>=4.17.0  # JSON schema validation (optional)
+pathlib  # Built-in path handling
+
+# Date and time handling
+python-dateutil>=2.8.2  # Enhanced date parsing
+
+# ===== DEVELOPMENT AND TESTING DEPENDENCIES (OPTIONAL) =====
+# Testing framework
+pytest>=7.0.0  # For unit testing
+pytest-asyncio>=0.21.0  # Async test support
+
+# Code quality
+black>=22.0.0  # Code formatting
+flake8>=4.0.0  # Code linting
+mypy>=1.0.0  # Type checking
+
+# ===== SYSTEM DEPENDENCIES =====
+# Built-in modules (listed for documentation)
+# os, sys, threading, datetime, pathlib, time, logging, json, tempfile, hashlib
+
+# ===== OPTIONAL ENHANCED FEATURES =====
+# Advanced audio processing (if needed)
 # sounddevice>=0.4.6  # Alternative to pyaudio
 # numpy>=1.21.0       # For audio data processing
+# librosa>=0.10.0     # Audio analysis library
 
-# Development dependencies (optional)
-# pytest>=7.0.0       # For testing
-# black>=22.0.0       # Code formatting
-# flake8>=4.0.0       # Code linting
+# Web interface (future enhancement)
+# fastapi>=0.100.0    # Web API framework
+# uvicorn>=0.22.0     # ASGI server
+# streamlit>=1.25.0   # Web UI framework
+
+# Database support (future enhancement)
+# sqlalchemy>=2.0.0   # Database ORM
+# sqlite3             # Built-in SQLite support
+
+# ===== INSTALLATION NOTES =====
+# 
+# INSTALLATION INSTRUCTIONS:
+# 
+# 1. Using UV (Recommended):
+#    uv pip install -r requirements.txt
+# 
+# 2. Using pip:
+#    pip install -r requirements.txt
+# 
+# 3. For development:
+#    pip install -r requirements.txt
+#    pip install pytest black flake8 mypy  # Development tools
+# 
+# ===== SYSTEM REQUIREMENTS =====
+# 
+# OPERATING SYSTEM:
+# - Windows 7+ (tested on Windows 10/11)
+# - macOS 10.12+ (tested on macOS 12+)
+# - Linux (Ubuntu 18.04+, CentOS 7+)
+# 
+# PYTHON VERSION:
+# - Python 3.8+ (recommended: Python 3.10+)
+# - 64-bit Python installation recommended
+# 
+# HARDWARE REQUIREMENTS:
+# - RAM: 4GB minimum, 8GB recommended
+# - Storage: 1GB free space for dependencies
+# - Microphone: Required for audio recording
+# - Internet: Required for AI services (OpenAI, ElevenLabs)
+# 
+# SYSTEM DEPENDENCIES:
+# 
+# Windows:
+# - Microsoft Visual C++ Build Tools (for PyAudio)
+# - Windows SDK (optional, for advanced audio features)
+# 
+# macOS:
+# - Xcode Command Line Tools: xcode-select --install
+# - Homebrew (recommended): brew install portaudio
+# 
+# Linux (Ubuntu/Debian):
+# - sudo apt-get update
+# - sudo apt-get install portaudio19-dev python3-dev
+# - sudo apt-get install build-essential
+# 
+# Linux (CentOS/RHEL):
+# - sudo yum install portaudio-devel python3-devel
+# - sudo yum groupinstall "Development Tools"
+# 
+# ===== API KEYS REQUIRED =====
+# 
+# ENVIRONMENT VARIABLES (.env file):
+# OPENAI_API_KEY=your_openai_api_key_here
+# ELEVENLABS_MAIN_API_KEY=your_elevenlabs_api_key_here
+# 
+# API KEY SETUP:
+# 1. OpenAI API Key:
+#    - Sign up at https://platform.openai.com/
+#    - Create API key in dashboard
+#    - Add to .env file as OPENAI_API_KEY
+# 
+# 2. ElevenLabs API Key:
+#    - Sign up at https://elevenlabs.io/
+#    - Get API key from settings
+#    - Add to .env file as ELEVENLABS_MAIN_API_KEY
+# 
+# ===== TROUBLESHOOTING =====
+# 
+# COMMON INSTALLATION ISSUES:
+# 
+# 1. PyAudio installation fails:
+#    Windows: Install Visual C++ Build Tools
+#    macOS: brew install portaudio
+#    Linux: sudo apt-get install portaudio19-dev
+# 
+# 2. Permission errors:
+#    - Run terminal/command prompt as administrator
+#    - Use virtual environment: python -m venv interview_env
+# 
+# 3. Keyboard module requires admin rights:
+#    - Run application as administrator (Windows)
+#    - Add user to input group (Linux)
+# 
+# 4. OpenAI API errors:
+#    - Verify API key is correct
+#    - Check API credits/billing
+#    - Ensure internet connection
+# 
+# 5. ElevenLabs API errors:
+#    - Verify API key format
+#    - Check character limit/usage
+#    - Ensure service is available
+# 
+# ===== VERSION COMPATIBILITY =====
+# 
+# TESTED VERSIONS:
+# - Python 3.8, 3.9, 3.10, 3.11, 3.12
+# - OpenAI API v1.3.0+
+# - PyAudio 0.2.11+
+# - Pydantic v2.0+
+# 
+# COMPATIBILITY NOTES:
+# - PyAudio may require specific versions for some systems
+# - OpenAI API v1.x required (v0.x not supported)
+# - ElevenLabs API changes may require updates
+# 
+# ===== PERFORMANCE OPTIMIZATION =====
+# 
+# OPTIONAL PERFORMANCE PACKAGES:
+# - uvloop>=0.17.0  # Faster event loop (Unix only)
+# - orjson>=3.8.0   # Faster JSON processing
+# - cython>=0.29.0  # Compiled extensions
+# 
+# To install performance packages:
+# pip install uvloop orjson cython  # Unix only for uvloop
+# 
+# ===== SECURITY CONSIDERATIONS =====
+# 
+# SECURITY PACKAGES (OPTIONAL):
+# - cryptography>=40.0.0  # Encryption support
+# - python-jose>=3.3.0    # JWT handling
+# 
+# SECURITY NOTES:
+# - Keep API keys secure and private
+# - Use environment variables for sensitive data
+# - Regularly update dependencies for security patches
+# - Consider using API key rotation

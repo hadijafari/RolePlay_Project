@@ -24,6 +24,7 @@ try:
     
     from agents.base_agent import BaseAgent, AgentConfig, AgentResponse
     from agents.test_agent import InterviewerAgent, SimpleEchoAgent
+    from agents.document_intelligence_agent import DocumentIntelligenceAgent
     print("✅ Agent imports successful")
 except ImportError as e:
     print(f"Agent Service: Missing required dependency: {e}")
@@ -84,6 +85,8 @@ class AgentService:
                 agent = InterviewerAgent(name=name, instructions=instructions, model=model)
             elif agent_type.lower() == "simple_echo":
                 agent = SimpleEchoAgent()
+            elif agent_type.lower() == "document_intelligence":
+                agent = DocumentIntelligenceAgent(name=name, instructions=instructions, model=model)
             elif agent_type.lower() == "custom":
                 config = AgentConfig(
                     name=name,

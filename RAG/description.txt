@@ -1,0 +1,27 @@
+Acclaimed high technology company; specialising in complex and current medical device product design and manufacture to a global market is expanding their Engineering team.
+
+
+Embrace your passion, willingness to make a difference, whilst contributing your expertise with a small, yet highly talented hardware & firmware full stack team.
+
+
+Role:
+
+Looking for an embedded software or systems engineer spanning hardware, firmware and GUI to develop an application for quasi real-time systems involving medical devices. Working within a small team of talented, passionate engineers delivering the highest coding standards, including:
+Designing software architecture & coding for high integrity applications.
+Compliant documentation.
+Software risk participation.
+Full R & D software lifecycle
+
+
+Environment:
+From 2 years' experience in application development.
+GUI development
+Visual C++
+Windows CE
+RTOS
+GIT, Jira
+Some Firmware and low-level embedded development.
+Software or Electrical Engineering degree or similar.
+
+
+Regulated industry experience such as medical devices, military, aerospace, mining will be considered highly.

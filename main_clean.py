@@ -160,8 +160,16 @@ class EnhancedInterviewPlatform:
             print(f"⚠️  Context Injection Service initialization failed: {e}")
             self.context_service = None
         
-        # Interview conductor will be initialized after interview plan is created
-        self.interview_conductor = None
+        try:
+            # Initialize interview conductor agent
+            self.interview_conductor = InterviewConductorAgent(
+                context_service=self.context_service
+            )
+            if not self.minimal_logging:
+                print("✅ Interview Conductor Agent initialized")
+        except Exception as e:
+            print(f"⚠️  Interview Conductor Agent initialization failed: {e}")
+            self.interview_conductor = None
     
     def display_welcome(self):
         """Display enhanced welcome message with feature overview."""
@@ -439,44 +447,13 @@ class EnhancedInterviewPlatform:
             analysis_result = await self.document_agent.analyze_resume(file_path)
             
             if analysis_result.success:
-                # Extract resume analysis from metadata - works for all document types
-                if hasattr(analysis_result, 'metadata') and 'resume_analysis' in analysis_result.metadata:
-                    # Get from metadata (preferred)
-                    resume_data = analysis_result.metadata['resume_analysis']
-                elif hasattr(analysis_result, 'data'):
-                    # Fallback to data field if it exists
-                    resume_data = analysis_result.data
-                else:
-                    # Last resort: try to extract from content or other fields
-                    print("⚠️  Resume analysis data not found in expected location")
-                    return False
-                
-                # Create ResumeAnalysis object from the data
-                try:
-                    from models.interview_models import ResumeAnalysis
-                    self.resume_analysis = ResumeAnalysis(**resume_data)
-                except Exception as e:
-                    print(f"❌ Failed to create ResumeAnalysis object: {e}")
-                    return False
-                
+                self.resume_analysis = analysis_result.data
                 print(f"✅ Resume analysis completed")
                 print(f"   📊 Skills identified: {len(self.resume_analysis.technical_skills)}")
-                
-                # Safely access experience years - works for all document types
-                try:
-                    if self.resume_analysis.career_progression:
-                        experience_years = self.resume_analysis.career_progression.total_experience_years
-                        print(f"   💼 Experience years: {experience_years}")
-                    else:
-                        print(f"   💼 Experience years: Not specified")
-                except AttributeError:
-                    print(f"   💼 Experience years: Not available")
-                
+                print(f"   💼 Experience years: {self.resume_analysis.total_experience_years}")
                 return True
             else:
-                # Handle different error field names - works for all document types
-                error_msg = getattr(analysis_result, 'error_message', None) or getattr(analysis_result, 'error', 'Unknown error')
-                print(f"❌ Resume analysis failed: {error_msg}")
+                print(f"❌ Resume analysis failed: {analysis_result.error}")
                 return False
                 
         except Exception as e:
@@ -496,50 +473,13 @@ class EnhancedInterviewPlatform:
             analysis_result = await self.document_agent.analyze_job_description(file_path)
             
             if analysis_result.success:
-                # Extract job description analysis from metadata - works for all document types
-                if hasattr(analysis_result, 'metadata') and 'job_analysis' in analysis_result.metadata:
-                    # Get from metadata (preferred)
-                    job_data = analysis_result.metadata['job_analysis']
-                elif hasattr(analysis_result, 'data'):
-                    # Fallback to data field if it exists
-                    job_data = analysis_result.data
-                else:
-                    # Last resort: try to extract from content or other fields
-                    print("⚠️  Job description analysis data not found in expected location")
-                    return False
-                
-                # Create JobDescriptionAnalysis object from the data
-                try:
-                    from models.interview_models import JobDescriptionAnalysis
-                    self.job_description_analysis = JobDescriptionAnalysis(**job_data)
-                except Exception as e:
-                    print(f"❌ Failed to create JobDescriptionAnalysis object: {e}")
-                    return False
-                
+                self.job_description_analysis = analysis_result.data
                 print(f"✅ Job description analysis completed")
-                
-                # Safely access job title - works for all document types
-                try:
-                    job_title = self.job_description_analysis.job_title
-                    print(f"   🎯 Role: {job_title}")
-                except AttributeError:
-                    print(f"   🎯 Role: Not specified")
-                
-                # Safely access company info - works for all document types
-                try:
-                    if self.job_description_analysis.company_info and self.job_description_analysis.company_info.company_name:
-                        company_name = self.job_description_analysis.company_info.company_name
-                        print(f"   🏢 Company: {company_name}")
-                    else:
-                        print(f"   🏢 Company: Not specified")
-                except AttributeError:
-                    print(f"   🏢 Company: Not available")
-                
+                print(f"   🎯 Role: {self.job_description_analysis.role_title}")
+                print(f"   🏢 Company: {self.job_description_analysis.company_name}")
                 return True
             else:
-                # Handle different error field names - works for all document types
-                error_msg = getattr(analysis_result, 'error_message', None) or getattr(analysis_result, 'error', 'Unknown error')
-                print(f"❌ Job description analysis failed: {error_msg}")
+                print(f"❌ Job description analysis failed: {analysis_result.error}")
                 return False
                 
         except Exception as e:
@@ -558,178 +498,24 @@ class EnhancedInterviewPlatform:
                 return False
             
             # Use existing interview planning logic
-            planning_result = await self.interview_planning_service.generate_interview_plan(
+            planning_result = await self.interview_planning_service.create_interview_plan(
                 self.resume_analysis,
                 self.job_description_analysis
             )
             
             if planning_result.success:
-                # Extract interview plan from result_data - works for all document types
-                if hasattr(planning_result, 'result_data'):
-                    # Get from result_data (preferred)
-                    plan_data = planning_result.result_data
-                elif hasattr(planning_result, 'data'):
-                    # Fallback to data field if it exists
-                    plan_data = planning_result.data
-                else:
-                    # Last resort: try to extract from content or other fields
-                    print("⚠️  Interview plan data not found in expected location")
-                    return False
-                
-                # Create InterviewPlan object from the data
-                try:
-                    from models.interview_models import InterviewPlan
-                    self.interview_plan = InterviewPlan(**plan_data)
-                except Exception as e:
-                    print(f"❌ Failed to create InterviewPlan object: {e}")
-                    return False
-                
+                self.interview_plan = planning_result.data
                 print(f"✅ Interview plan created")
-                
-                # Safely access sections - works for all document types
-                try:
-                    sections_count = len(self.interview_plan.interview_sections)
-                    print(f"   📋 Sections: {sections_count}")
-                except AttributeError:
-                    print(f"   📋 Sections: Not available")
-                
-                # Safely access duration - works for all document types
-                try:
-                    duration = self.interview_plan.total_estimated_duration_minutes
-                    print(f"   ⏱️  Duration: {duration} minutes")
-                except AttributeError:
-                    print(f"   ⏱️  Duration: Not specified")
-                
-                # Print detailed interview plan
-                print("\n" + "="*80)
-                print("📋 DETAILED INTERVIEW PLAN")
-                print("="*80)
-                self._print_detailed_interview_plan()
-                print("="*80)
-                
-                # Initialize interview conductor now that we have the plan
-                try:
-                    from agents.interview_conductor_agent import InterviewConductorAgent
-                    self.interview_conductor = InterviewConductorAgent(interview_plan=self.interview_plan)
-                    print("✅ Interview Conductor Agent initialized")
-                except Exception as e:
-                    print(f"⚠️  Interview Conductor Agent initialization failed: {e}")
-                    self.interview_conductor = None
-                
+                print(f"   📋 Sections: {len(self.interview_plan.interview_sections)}")
+                print(f"   ⏱️  Duration: {self.interview_plan.estimated_duration_minutes} minutes")
                 return True
             else:
-                # Handle different error field names - works for all document types
-                error_msg = getattr(planning_result, 'error_message', None) or getattr(planning_result, 'error', 'Unknown error')
-                print(f"❌ Interview plan creation failed: {error_msg}")
+                print(f"❌ Interview plan creation failed: {planning_result.error}")
                 return False
                 
         except Exception as e:
             print(f"❌ Interview plan creation error: {e}")
             return False
-    
-    def _print_detailed_interview_plan(self):
-        """Print the complete interview plan in a detailed, readable format."""
-        try:
-            if not self.interview_plan:
-                print("❌ No interview plan available to display")
-                return
-            
-            # Print interview overview
-            print(f"\n🎯 INTERVIEW OVERVIEW")
-            print(f"   Total Duration: {self.interview_plan.total_estimated_duration_minutes} minutes")
-            print(f"   Total Sections: {len(self.interview_plan.interview_sections)}")
-            
-            # Print interview objectives
-            if hasattr(self.interview_plan, 'interview_objectives') and self.interview_plan.interview_objectives:
-                print(f"\n🎯 INTERVIEW OBJECTIVES:")
-                for i, objective in enumerate(self.interview_plan.interview_objectives, 1):
-                    print(f"   {i}. {objective}")
-            
-            # Print key focus areas
-            if hasattr(self.interview_plan, 'key_focus_areas') and self.interview_plan.key_focus_areas:
-                print(f"\n🔍 KEY FOCUS AREAS:")
-                for i, area in enumerate(self.interview_plan.key_focus_areas, 1):
-                    print(f"   {i}. {area}")
-            
-            # Print each section in detail
-            print(f"\n📋 INTERVIEW SECTIONS:")
-            for i, section in enumerate(self.interview_plan.interview_sections, 1):
-                print(f"\n   {i}. {section.section_name.upper()}")
-                print(f"      Phase: {section.phase.value}")
-                print(f"      Duration: {section.estimated_duration_minutes} minutes")
-                print(f"      Description: {section.description}")
-                
-                # Print section objectives
-                if section.objectives:
-                    print(f"      Objectives:")
-                    for obj in section.objectives:
-                        print(f"        • {obj}")
-                
-                # Print key evaluation points
-                if section.key_evaluation_points:
-                    print(f"      Key Evaluation Points:")
-                    for point in section.key_evaluation_points:
-                        print(f"        • {point}")
-                
-                # Print success criteria
-                if section.success_criteria:
-                    print(f"      Success Criteria:")
-                    for criterion in section.success_criteria:
-                        print(f"        • {criterion}")
-                
-                # Print questions in this section
-                if section.questions:
-                    print(f"      Questions ({len(section.questions)}):")
-                    for j, question in enumerate(section.questions, 1):
-                        print(f"\n        {j}. {question.question_text}")
-                        print(f"           Type: {question.question_type.value}")
-                        print(f"           Difficulty: {question.difficulty_level}/5")
-                        print(f"           Estimated Time: {question.estimated_time_minutes} minutes")
-                        
-                        if question.skill_focus:
-                            print(f"           Skill Focus: {', '.join(question.skill_focus)}")
-                        
-                        if question.evaluation_criteria:
-                            print(f"           Evaluation Criteria: {', '.join(question.evaluation_criteria)}")
-                else:
-                    print(f"      Questions: None available")
-            
-            # Print evaluation priorities
-            if hasattr(self.interview_plan, 'evaluation_priorities') and self.interview_plan.evaluation_priorities:
-                print(f"\n📊 EVALUATION PRIORITIES:")
-                for i, priority in enumerate(self.interview_plan.evaluation_priorities, 1):
-                    print(f"   {i}. {priority}")
-            
-            # Print potential red flags
-            if hasattr(self.interview_plan, 'potential_red_flags') and self.interview_plan.potential_red_flags:
-                print(f"\n🚨 POTENTIAL RED FLAGS:")
-                for i, flag in enumerate(self.interview_plan.potential_red_flags, 1):
-                    print(f"   {i}. {flag}")
-            
-            # Print areas needing clarification
-            if hasattr(self.interview_plan, 'clarification_needed') and self.interview_plan.clarification_needed:
-                print(f"\n❓ AREAS NEEDING CLARIFICATION:")
-                for i, area in enumerate(self.interview_plan.clarification_needed, 1):
-                    print(f"   {i}. {area}")
-            
-            # Print interviewer notes
-            if hasattr(self.interview_plan, 'interviewer_notes') and self.interview_plan.interviewer_notes:
-                print(f"\n📝 INTERVIEWER NOTES:")
-                for i, note in enumerate(self.interview_plan.interviewer_notes, 1):
-                    print(f"   {i}. {note}")
-            
-            # Print recommended follow-up areas
-            if hasattr(self.interview_plan, 'recommended_follow_up_areas') and self.interview_plan.recommended_follow_up_areas:
-                print(f"\n🔄 RECOMMENDED FOLLOW-UP AREAS:")
-                for i, area in enumerate(self.interview_plan.recommended_follow_up_areas, 1):
-                    print(f"   {i}. {area}")
-            
-            print(f"\n✅ Interview plan display completed")
-            
-        except Exception as e:
-            print(f"⚠️  Error displaying interview plan: {e}")
-            import traceback
-            traceback.print_exc()
     
     async def _auto_start_interview(self):
         """Automatically start interview using existing functions."""
@@ -742,37 +528,35 @@ class EnhancedInterviewPlatform:
                 print("❌ Interview conductor not available")
                 return False
             
-            # Interview conductor is already initialized and ready
-            self.interview_active = True
-            print("✅ Interview ready to start")
+            # Use existing interview start logic
+            start_result = await self.interview_conductor.initialize_interview(
+                self.interview_plan,
+                {
+                    "resume_analysis": self.resume_analysis,
+                    "job_description_analysis": self.job_description_analysis
+                }
+            )
             
-            # Get opening message using the first question from the plan
-            try:
-                if self.interview_plan.interview_sections:
-                    first_section = self.interview_plan.interview_sections[0]
-                    if first_section.questions:
-                        first_question = first_section.questions[0]
-                        opening_message = f"Welcome! Let's begin the interview. {first_question.question_text}"
-                    else:
-                        opening_message = "Welcome! Let's begin the interview. Tell me about yourself and your background."
-                else:
-                    opening_message = "Welcome! Let's begin the interview. Tell me about yourself and your background."
+            if start_result.success:
+                self.interview_active = True
+                print("✅ Interview initialized and ready")
                 
-                print(f"\n🤖 Interviewer: {opening_message}")
-                
-                # Use TTS for opening message
-                if self.tts_service:
-                    tts_result = self.tts_service.generate_speech(
-                        opening_message,
-                        play_immediately=True
-                    )
+                # Give opening message
+                opening_result = await self.interview_conductor.get_opening_message()
+                if opening_result.success:
+                    print(f"\n🤖 Interviewer: {opening_result.content}")
+                    
+                    # Use TTS for opening message
+                    if self.tts_service:
+                        tts_result = self.tts_service.generate_speech(
+                            opening_result.content,
+                            play_immediately=True
+                        )
                 
                 return True
-                
-            except Exception as e:
-                print(f"⚠️  Could not generate opening message: {e}")
-                # Still return True since the interview conductor is ready
-                return True
+            else:
+                print(f"❌ Interview initialization failed: {start_result.error}")
+                return False
                 
         except Exception as e:
             print(f"❌ Interview start error: {e}")
