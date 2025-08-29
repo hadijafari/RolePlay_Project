@@ -10,7 +10,7 @@ New Features:
 - Multi-modal document processing
 - Dynamic interview management
 
-Spacebar-controlled audio recording with comprehensive interview management.
+Tab-controlled audio recording with comprehensive interview management.
 """
 
 import os
@@ -102,12 +102,19 @@ class EnhancedInterviewPlatform:
             stt_service=self.stt_service,
             tts_service=self.tts_service,
             document_agent=getattr(self, 'document_agent', None),
-            interview_conductor=self.interview_conductor,
-            interview_plan=self.interview_plan
+            interview_conductor=None,  # Explicitly None for now
+            interview_plan=None  # Explicitly None for now
         )
         
         # Application state
         self.running = False
+    
+    def update_recorder_interview_components(self):
+        """Update recorder with interview components after they're created."""
+        if hasattr(self, 'recorder'):
+            self.recorder.interview_conductor = self.interview_conductor
+            self.recorder.interview_plan = self.interview_plan
+            print("✅ Recorder updated with interview conductor and plan")
     
     def _initialize_core_services(self):
         """Initialize core STT and TTS services."""
@@ -183,8 +190,8 @@ class EnhancedInterviewPlatform:
             print("   • Dynamic Interview Management")
             print()
             print("🎮 CONTROLS:")
-            print("   • SPACEBAR (hold): Record your response")
-            print("   • ESC: Exit interview")
+            print("   • TAB (hold): Record your response")
+            print("   • Ctrl+C: Exit interview")
             print()
         else:
             print("📝 NOTE: Running in basic mode - upload enhanced modules for full features")
@@ -200,34 +207,28 @@ class EnhancedInterviewPlatform:
         print("=" * 60)
         print()
         print("🎤 AUDIO CONTROLS:")
-        print("  SPACEBAR (hold)  - Record audio response")
-        print("  SPACEBAR (release) - Stop recording and process")
-        print("  ESC              - Exit application")
+        print("  TAB (hold)       - Record audio response")
+        print("  TAB (release)    - Stop recording and process")
+        print("  Ctrl+C           - Exit application")
     
     def setup_keyboard_handlers(self):
         """Set up keyboard event handlers."""
         
-        # Spacebar handlers for audio recording
-        keyboard.on_press_key('space', self._on_spacebar_press)
-        keyboard.on_release_key('space', self._on_spacebar_release)
+        # Tab key handlers for audio recording
+        keyboard.on_press_key('tab', self._on_tab_press)
+        keyboard.on_release_key('tab', self._on_tab_release)
         
-        # Escape key handler
-        keyboard.on_press_key('esc', self._on_escape_press)
+        # Ctrl+C handler for exit (handled by KeyboardInterrupt in main loop)
     
-    def _on_spacebar_press(self, event):
-        """Handle spacebar press for recording."""
+    def _on_tab_press(self, event):
+        """Handle tab key press for recording."""
         if not self.recorder.is_recording:
             self.recorder.start_recording()
     
-    def _on_spacebar_release(self, event):
-        """Handle spacebar release to stop recording."""
+    def _on_tab_release(self, event):
+        """Handle tab key release to stop recording."""
         if self.recorder.is_recording:
             self.recorder.stop_recording()
-    
-    def _on_escape_press(self, event):
-        """Handle escape key press."""
-        print("\nInterview Platform: Shutting down...")
-        self.running = False
     
     async def run(self):
         """Main application loop with enhanced features."""
@@ -303,19 +304,23 @@ class EnhancedInterviewPlatform:
             return
         
         # Main loop for keyboard events only (no command input)
-        print("\n🎤 Interview ready! Hold SPACEBAR to record, press ESC to exit")
+        print("\n🎤 Interview ready! Hold TAB to record, press Ctrl+C to exit")
         try:
             while self.running:
                 await asyncio.sleep(0.1)
-        except:
-            pass
+        except KeyboardInterrupt:
+            print("\nInterview Platform: Interrupted by user")
+            self.running = False
+        except Exception as e:
+            print(f"Interview Platform: Unexpected error - {e}")
+            self.running = False
     
     async def _run_basic_mode(self):
         """Run application in basic mode (original functionality)."""
         
         print("\n📝 Basic Mode: Audio recording and transcription only")
-        print("Hold SPACEBAR to record, release to stop and transcribe")
-        print("Press ESC to exit")
+        print("Hold TAB to record, release to stop and transcribe")
+        print("Press Ctrl+C to exit")
         
         while self.running:
             await asyncio.sleep(0.1)
@@ -615,6 +620,9 @@ class EnhancedInterviewPlatform:
                 except Exception as e:
                     print(f"⚠️  Interview Conductor Agent initialization failed: {e}")
                     self.interview_conductor = None
+                
+                # Update the recorder with the new interview components
+                self.update_recorder_interview_components()
                 
                 return True
             else:
@@ -989,8 +997,8 @@ class EnhancedAudioRecorder:
                 
                 # Enhanced processing with interview conductor
                 if self.interview_conductor and self.interview_plan:
-                    import asyncio
-                    asyncio.create_task(self._process_with_interview_conductor(transcription_text))
+                    # Process with interview conductor using synchronous approach
+                    self._process_with_interview_conductor_sync(transcription_text)
                 else:
                     # Fallback to basic TTS response
                     if self.tts_service:
@@ -1013,6 +1021,11 @@ class EnhancedAudioRecorder:
     async def _process_with_interview_conductor(self, transcription_text: str):
         """Process candidate response with interview conductor."""
         try:
+            # Validate that conductor and plan are properly initialized
+            if not self.interview_conductor or not self.interview_plan:
+                print("⚠️ Interview conductor or plan not properly initialized")
+                return
+            
             print("🤖 Processing response with AI Interview Conductor...")
             
             # Increment turn count
@@ -1064,6 +1077,98 @@ class EnhancedAudioRecorder:
                 
         except Exception as e:
             print(f"❌ Interview conductor processing error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _process_with_interview_conductor_sync(self, transcription_text: str):
+        """Synchronous version of interview conductor processing for use in threads."""
+        try:
+            # Validate that conductor and plan are properly initialized
+            if not self.interview_conductor or not self.interview_plan:
+                print("⚠️ Interview conductor or plan not properly initialized")
+                return
+            
+            print("🤖 Processing response with AI Interview Conductor...")
+            
+            # Increment turn count
+            self.interview_turn_count += 1
+            
+            # Create context for this interview turn
+            additional_context = {
+                "turn_number": self.interview_turn_count,
+                "audio_file": self.current_filename,
+                "transcription_confidence": "high",  # Could be extracted from STT result
+                "response_length": len(transcription_text.split()),
+                "recording_timestamp": datetime.now().isoformat()
+            }
+            
+            # Process with interview conductor using synchronous approach
+            # We'll need to handle the async nature of the conductor differently
+            try:
+                # Create a new event loop for this thread if needed
+                import asyncio
+                loop_created = False
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    # No event loop in this thread, create one
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop_created = True
+                
+                # Run the async conductor method in the event loop
+                conductor_response = loop.run_until_complete(
+                    self.interview_conductor.conduct_interview_turn(
+                        transcription_text,
+                        additional_context
+                    )
+                )
+                
+                if conductor_response.success:
+                    print(f"🤖 Interviewer: {conductor_response.content}")
+                    
+                    # Use TTS to speak the interviewer's response
+                    if self.tts_service:
+                        print("🔊 Speaking interviewer response...")
+                        tts_result = self.tts_service.generate_speech(
+                            conductor_response.content,
+                            play_immediately=True
+                        )
+                        
+                        if not tts_result["success"]:
+                            print(f"⚠️  TTS failed: {tts_result.get('error', 'Unknown error')}")
+                    
+                    # Show interview progress
+                    progress = self.interview_conductor.get_interview_progress()
+                    if not self.minimal_logging:
+                        print(f"📊 Progress: {progress['interview_status']['completion_percentage']:.1f}% | "
+                              f"Phase: {progress['current_phase']} | "
+                              f"Questions: {progress['question_progress']['questions_asked']}")
+                    
+                    # Check if interview is complete
+                    if not progress['interview_status']['should_continue']:
+                        print("🎉 Interview completed!")
+                        # Handle completion synchronously
+                        loop.run_until_complete(self._handle_interview_completion())
+                        
+                else:
+                    print(f"❌ Interview conductor error: {conductor_response.error}")
+                
+                # Clean up the event loop if we created it
+                if loop_created:
+                    loop.close()
+                    
+            except Exception as e:
+                print(f"❌ Interview conductor processing error: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                # Clean up the event loop if we created it
+                if loop_created:
+                    loop.close()
+                
+        except Exception as e:
+            print(f"❌ Interview conductor sync processing error: {e}")
             import traceback
             traceback.print_exc()
     
