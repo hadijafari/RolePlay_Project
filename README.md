@@ -38,6 +38,8 @@ A comprehensive Python-based interview platform that combines audio recording, d
 - **Enhanced Error Handling**: Comprehensive error recovery and fallback mechanisms
 - **Robust Data Extraction**: Safe attribute access with fallback mechanisms for all data types
 - **Enhanced AI Prompts**: Explicit data structure rules and validation requirements
+- **Fixed Interview Conductor Initialization**: Resolved timing issue where recorder wasn't properly updated with interview components
+- **Updated Key Bindings**: Changed from SPACEBAR to TAB for recording, ESC to Ctrl+C for exit
 
 ---
 
@@ -97,10 +99,10 @@ uv run main.py
 ### **Phase 3: AI-Conducted Interview**
 ```bash
 # 🎤 Interview ready! 
-# • Hold SPACEBAR to record your responses
+# • Hold TAB to record your responses
 # • AI processes responses and asks intelligent follow-up questions
 # • Real-time progress tracking and phase management
-# • Press ESC to exit interview
+# • Press Ctrl+C to exit interview
 ```
 
 ### **Phase 4: Results & Analytics**
@@ -171,9 +173,9 @@ python main.py
 ### **🎤 Interview Controls (Simple & Intuitive)**
 | Control | Action | Function |
 |---------|--------|----------|
-| **SPACEBAR** (hold) | Record audio response | Candidate answers |
-| **SPACEBAR** (release) | Stop recording & process | AI processes response |
-| **ESC** | Exit application | Clean shutdown |
+| **TAB** (hold) | Record audio response | Candidate answers |
+| **TAB** (release) | Stop recording & process | AI processes response |
+| **Ctrl+C** | Exit application | Clean shutdown |
 
 ### **📊 Real-Time Information Display**
 | Feature | Description | Information |
@@ -424,10 +426,30 @@ echo ".env" >> .gitignore
 - **Real-Time Feedback**: Detailed progress updates and plan display throughout setup
 
 ### **🎤 Enhanced User Experience**
-- **Simplified Controls**: Just SPACEBAR to record, ESC to exit
+- **Simplified Controls**: Just TAB to record, Ctrl+C to exit
 - **Comprehensive Plan View**: See exactly what the AI has planned for your interview
 - **Progress Tracking**: Real-time completion percentage and phase management
 - **Automatic Summaries**: Complete interview evaluation and recommendations
+
+---
+
+## 🐛 **Recent Bug Fixes & Improvements**
+
+### **Interview Conductor Initialization Fix (Latest)**
+- **Problem**: Interview conductor wasn't working after plan creation - it was just echoing back user responses
+- **Root Cause**: Timing issue where the audio recorder was initialized before interview components existed
+- **Solution**: Implemented proper initialization sequence with `update_recorder_interview_components()` method
+- **Result**: Interview conductor now properly asks questions from the plan and conducts interviews
+
+### **Key Binding Updates**
+- **Changed Recording Key**: From SPACEBAR to TAB for better accessibility
+- **Changed Exit Key**: From ESC to Ctrl+C for more standard terminal behavior
+- **Updated All UI Messages**: Consistent references throughout the application
+
+### **Async/Await Fix**
+- **Problem**: "coroutine was never awaited" errors in transcription processing
+- **Solution**: Created synchronous wrapper method `_process_with_interview_conductor_sync()` for thread-safe operation
+- **Result**: Smooth interview processing without async errors
 
 ---
 
@@ -498,10 +520,10 @@ pytest tests/test_full_workflow.py
 - **Documentation**: Comprehensive inline documentation
 
 ### **Version Information**
-- **Current Version**: Enhanced AI Interview Platform v2.1 (Latest)
+- **Current Version**: Enhanced AI Interview Platform v2.2 (Latest)
 - **Compatibility**: Python 3.8+, OpenAI API v1.3+
-- **Last Updated**: December 2024
-- **Key Features**: Automatic workflow, enhanced AI prompts, robust data structures
+- **Last Updated**: August 2025
+- **Key Features**: Automatic workflow, enhanced AI prompts, robust data structures, fixed interview conductor, updated key bindings
 
 ---
 
