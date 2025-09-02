@@ -1,0 +1,1055 @@
+{
+  "plan_id": "interview_plan_20250902_183631",
+  "created_timestamp": "2025-09-02T18:36:31.804792",
+  "resume_analysis": {
+    "document_type": "resume",
+    "personal_info": {
+      "full_name": "Mohammadhadi Mazhabjafari",
+      "email": "mazhabjaffari.hadi@gmail.com",
+      "phone": "0432850020",
+      "location": "Unit 2/47 Tamar Grove, Oakleigh, VIC 3166, Australia",
+      "linkedin": "Hadi M.Jafari",
+      "github": null,
+      "portfolio": null
+    },
+    "technical_skills": [
+      {
+        "skill_name": "Embedded C",
+        "category": "Programming Languages",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 3,
+        "context_mentions": [
+          "Developed and optimized embedded software in C",
+          "Proficient in programming STM32 microcontrollers",
+          "Developed firmware to read and write sensor data"
+        ]
+      },
+      {
+        "skill_name": "C++",
+        "category": "Programming Languages",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 3,
+        "context_mentions": [
+          "Developed and optimized embedded software in C++",
+          "Created modular, maintainable code structures",
+          "Proficient in programming STM32 microcontrollers"
+        ]
+      },
+      {
+        "skill_name": "FreeRTOS",
+        "category": "Frameworks",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 4,
+        "context_mentions": [
+          "Used FreeRTOS to manage concurrent data collection tasks",
+          "Implemented multitasking applications using FreeRTOS",
+          "Proficient in FreeRTOS for real-time applications"
+        ]
+      },
+      {
+        "skill_name": "STM32",
+        "category": "Microcontrollers",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 5,
+        "context_mentions": [
+          "Programmed and configured STM32 microcontrollers",
+          "Developed firmware for STM32 microcontrollers",
+          "Successfully programmed the BMI323 accelerometer using STM32"
+        ]
+      },
+      {
+        "skill_name": "ESP32",
+        "category": "Microcontrollers",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 5,
+        "context_mentions": [
+          "Programmed and configured ESP32 microcontrollers",
+          "Controlled ESP32 using AT commands",
+          "Programmed ESP32 to connect with MQTT servers"
+        ]
+      },
+      {
+        "skill_name": "Altium Designer",
+        "category": "Tools",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 4,
+        "context_mentions": [
+          "Designed and developed PCBs using Altium Designer",
+          "Generated intricate PCB layouts using Altium Designer",
+          "Designed and developed custom 3D printed parts using CAD software"
+        ]
+      },
+      {
+        "skill_name": "I2C",
+        "category": "Communication Protocols",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 3,
+        "context_mentions": [
+          "Configured I2C communication on STM32 microcontrollers",
+          "Optimized I2C settings for stable data polling",
+          "Successfully integrated I2C for environmental data acquisition"
+        ]
+      },
+      {
+        "skill_name": "SPI",
+        "category": "Communication Protocols",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 3,
+        "context_mentions": [
+          "Implemented SPI communication on STM32 microcontroller",
+          "Configured SPI for efficient data storage operations",
+          "Successfully integrated SPI for data logging"
+        ]
+      },
+      {
+        "skill_name": "UART",
+        "category": "Communication Protocols",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 3,
+        "context_mentions": [
+          "Configured UART communication on STM32 microcontrollers",
+          "Managed UART communication protocol in DMA mode",
+          "Implemented GPIO input configuration for user button"
+        ]
+      },
+      {
+        "skill_name": "Git",
+        "category": "Version Control",
+        "proficiency_level": "advanced",
+        "years_experience": 6,
+        "mentioned_count": 2,
+        "context_mentions": [
+          "Extensive experience using GitHub for version control",
+          "Proficient in using Git for command-line operations"
+        ]
+      }
+    ],
+    "soft_skills": [
+      "Detail-oriented",
+      "Goal-focused",
+      "Team collaboration",
+      "Problem-solving",
+      "Communication"
+    ],
+    "work_experience": [
+      {
+        "job_title": "Firmware and Hardware Engineer",
+        "company_name": "Center of Infusion",
+        "duration": "May 2023 - Current",
+        "start_date": "2023-05-01",
+        "end_date": null,
+        "is_current": true,
+        "key_responsibilities": [
+          "Developed and optimized embedded software in C and C++",
+          "Programmed and configured microcontrollers such as STM32 and ESP32",
+          "Designed and developed PCBs from schematic to layout",
+          "Developed and executed detailed testing protocols for hardware and software components"
+        ],
+        "achievements": [
+          "Successfully designed and implemented a data acquisition system on a single microcontroller",
+          "Successfully programmed the BMI323 accelerometer and gyroscope sensor",
+          "Successfully controlled an ESP32 microcontroller with an STM32 using AT commands"
+        ],
+        "technologies_used": [
+          "Embedded C",
+          "C++",
+          "FreeRTOS",
+          "STM32",
+          "ESP32",
+          "Altium Designer"
+        ],
+        "team_size": null,
+        "reporting_structure": null
+      },
+      {
+        "job_title": "Firmware and Hardware Engineer",
+        "company_name": "Artin System Dana (ASD)",
+        "duration": "June 2017 - February 2023",
+        "start_date": "2017-06-01",
+        "end_date": "2023-02-28",
+        "is_current": false,
+        "key_responsibilities": [
+          "Designing and programming a diverse range of smart home products",
+          "Generating intricate PCB layouts using Altium Designer",
+          "Programming different types of Microcontroller chips",
+          "Designing and controlling systems to regulate small DC motors"
+        ],
+        "achievements": [
+          "Successfully implemented a network of IoT devices containing up to 50 devices",
+          "Designed a 100% noise free PCB for smart home products",
+          "Elevated the battery's energy efficiency by 60%"
+        ],
+        "technologies_used": [
+          "Embedded C",
+          "C++",
+          "Altium Designer",
+          "Z-wave",
+          "WiFi"
+        ],
+        "team_size": null,
+        "reporting_structure": null
+      },
+      {
+        "job_title": "Automation System Integrator",
+        "company_name": "Mehrab Pirouz Co (MEP)",
+        "duration": "June 2013 - June 2017",
+        "start_date": "2013-06-01",
+        "end_date": "2017-06-30",
+        "is_current": false,
+        "key_responsibilities": [
+          "Devised and executed specialized security system configurations",
+          "Created and implemented home automation electrical diagrams",
+          "Successfully performed intricate integration of smart home systems"
+        ],
+        "achievements": [
+          "Successfully installed a vast variety of brands in the home automation industry",
+          "Improved the efficiency and reliability of automation systems by up to 30%",
+          "Reduced power consumption by 30-40%"
+        ],
+        "technologies_used": [
+          "AutoCAD Electrical",
+          "KNX",
+          "S-BUS",
+          "Z-wave",
+          "ZigBee"
+        ],
+        "team_size": null,
+        "reporting_structure": null
+      }
+    ],
+    "education": [
+      {
+        "degree": "M. Sc.",
+        "major": "Electrical Engineering",
+        "institution": "Islamic Azad University of Tehran",
+        "graduation_year": 2013,
+        "gpa": null,
+        "relevant_coursework": [],
+        "honors": []
+      },
+      {
+        "degree": "B. Sc.",
+        "major": "Electrical Engineering",
+        "institution": "Islamic Azad University of Saveh",
+        "graduation_year": 2010,
+        "gpa": null,
+        "relevant_coursework": [],
+        "honors": []
+      }
+    ],
+    "certifications": [],
+    "career_progression": {
+      "total_experience_years": 10.0,
+      "career_trajectory": "mixed",
+      "job_changes_frequency": 2.0,
+      "industry_consistency": true,
+      "role_progression": [
+        "Automation System Integrator",
+        "Firmware and Hardware Engineer"
+      ],
+      "career_gaps": []
+    },
+    "strengths": [
+      "Extensive expertise in embedded systems",
+      "Strong foundation in debugging and peripheral integration",
+      "Ability to develop and troubleshoot complex embedded systems"
+    ],
+    "potential_gaps": [],
+    "unique_selling_points": [
+      "Proficient in multiple programming styles",
+      "Expert in PCB design and routing techniques",
+      "Experienced in managing IoT device networks"
+    ],
+    "red_flags": [],
+    "analysis_timestamp": "2025-09-02T18:34:37.679743",
+    "confidence_score": 0.9
+  },
+  "job_analysis": {
+    "document_type": "job_description",
+    "job_title": "Embedded Software Engineer",
+    "company_info": {
+      "company_name": "unknown",
+      "industry": "medical devices",
+      "company_size": "unknown",
+      "culture_keywords": [
+        "passion",
+        "teamwork",
+        "innovation"
+      ],
+      "benefits_offered": []
+    },
+    "technical_requirements": [
+      {
+        "requirement": "Visual C++",
+        "category": "technical",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "Windows CE",
+        "category": "technical",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "RTOS",
+        "category": "technical",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "GIT",
+        "category": "technical",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "Jira",
+        "category": "technical",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "Firmware and low-level embedded development",
+        "category": "technical",
+        "priority": "nice_to_have",
+        "years_required": null
+      }
+    ],
+    "soft_skill_requirements": [
+      {
+        "requirement": "Willingness to make a difference",
+        "category": "soft_skill",
+        "priority": "required",
+        "years_required": null
+      },
+      {
+        "requirement": "Ability to work in a small team",
+        "category": "soft_skill",
+        "priority": "required",
+        "years_required": null
+      }
+    ],
+    "experience_requirements": [
+      {
+        "requirement": "2 years experience in application development",
+        "category": "experience",
+        "priority": "required",
+        "years_required": 2
+      },
+      {
+        "requirement": "Regulated industry experience such as medical devices, military, aerospace, mining",
+        "category": "experience",
+        "priority": "preferred",
+        "years_required": null
+      }
+    ],
+    "education_requirements": [
+      {
+        "requirement": "Software or Electrical Engineering degree or similar",
+        "category": "education",
+        "priority": "required",
+        "years_required": null
+      }
+    ],
+    "job_summary": "Looking for an embedded software or systems engineer spanning hardware, firmware and GUI to develop an application for quasi real-time systems involving medical devices.",
+    "key_responsibilities": [
+      "Designing software architecture & coding for high integrity applications",
+      "Compliant documentation",
+      "Software risk participation",
+      "Full R & D software lifecycle"
+    ],
+    "success_metrics": [],
+    "career_growth_opportunities": [],
+    "role_seniority": "mid",
+    "role_type": "individual_contributor",
+    "critical_success_factors": [],
+    "potential_challenges": [],
+    "analysis_timestamp": "2025-09-02T18:35:14.937746",
+    "confidence_score": 0.85
+  },
+  "candidate_match": null,
+  "interview_sections": [
+    {
+      "phase": "opening",
+      "section_name": "Opening & Background",
+      "description": "Initial conversation to make candidate comfortable and understand their background",
+      "objectives": [
+        "Make candidate comfortable",
+        "Understand motivation for role",
+        "Get overview of background",
+        "Set interview tone"
+      ],
+      "estimated_duration_minutes": 6,
+      "questions": [
+        {
+          "question_text": "Can you tell me about your journey in embedded systems, starting from your education to your recent role at the Center of Infusion?",
+          "question_type": "open_ended",
+          "phase": "opening",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 6,
+          "skill_focus": [
+            "embedded systems design",
+            "firmware development",
+            "hardware integration"
+          ],
+          "evaluation_criteria": [
+            "clarity of background",
+            "relevance to the role",
+            "depth of experience"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "What specific projects have you worked on that involved debugging complex embedded systems? Please describe the challenges you faced and how you overcame them.",
+          "question_type": "behavioral",
+          "phase": "opening",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 7,
+          "skill_focus": [
+            "debugging techniques",
+            "problem-solving",
+            "system troubleshooting"
+          ],
+          "evaluation_criteria": [
+            "problem-solving approach",
+            "technical depth",
+            "communication of experience"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "In your experience, how have you integrated peripherals using I2C and SPI? Can you provide a specific example?",
+          "question_type": "technical",
+          "phase": "opening",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 6,
+          "skill_focus": [
+            "peripheral integration",
+            "I2C",
+            "SPI"
+          ],
+          "evaluation_criteria": [
+            "technical understanding",
+            "practical experience",
+            "clarity in explanation"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "How do you approach project management in your work, particularly with tools like Jira? Can you share an example of how you have used it effectively in a project?",
+          "question_type": "situational",
+          "phase": "opening",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "project management",
+            "Jira",
+            "team collaboration"
+          ],
+          "evaluation_criteria": [
+            "understanding of project management",
+            "experience with tools",
+            "teamwork skills"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Could you explain any gaps in your experience with Visual C++ or Windows CE, and how you plan to address them if selected for this role?",
+          "question_type": "clarification",
+          "phase": "opening",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Visual C++",
+            "Windows CE",
+            "self-improvement"
+          ],
+          "evaluation_criteria": [
+            "awareness of skill gaps",
+            "proactiveness",
+            "commitment to learning"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        }
+      ],
+      "backup_questions": [],
+      "key_evaluation_points": [
+        "Communication clarity",
+        "Enthusiasm for role",
+        "Professional presentation",
+        "Cultural fit indicators"
+      ],
+      "success_criteria": [
+        "Candidate appears comfortable and engaged",
+        "Clear articulation of interest in role",
+        "Professional and positive demeanor"
+      ]
+    },
+    {
+      "phase": "technical",
+      "section_name": "Technical Assessment",
+      "description": "Evaluate technical skills and problem-solving approach",
+      "objectives": [
+        "Assess technical competency",
+        "Evaluate problem-solving skills",
+        "Test depth of knowledge",
+        "Understand technical experience"
+      ],
+      "estimated_duration_minutes": 19,
+      "questions": [
+        {
+          "question_text": "Can you describe your experience with embedded systems design and development, particularly focusing on any projects where you utilized FreeRTOS or STM32? What challenges did you face and how did you overcome them?",
+          "question_type": "open_ended",
+          "phase": "technical",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 7,
+          "skill_focus": [
+            "Embedded systems design",
+            "FreeRTOS",
+            "STM32"
+          ],
+          "evaluation_criteria": [
+            "Depth of knowledge",
+            "Problem-solving skills",
+            "Technical competency"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Explain your approach to debugging complex embedded systems. Can you provide an example of a particularly challenging bug you encountered and the steps you took to resolve it?",
+          "question_type": "technical",
+          "phase": "technical",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 8,
+          "skill_focus": [
+            "Debugging techniques",
+            "Problem-solving",
+            "Embedded systems"
+          ],
+          "evaluation_criteria": [
+            "Depth of knowledge",
+            "Technical competency",
+            "Analytical skills"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Describe a situation where you had to integrate multiple peripherals using I2C or SPI. What was your strategy for managing communication between these devices, and how did you ensure reliability?",
+          "question_type": "situational",
+          "phase": "technical",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 6,
+          "skill_focus": [
+            "Peripheral integration",
+            "I2C",
+            "SPI"
+          ],
+          "evaluation_criteria": [
+            "Technical competency",
+            "Problem-solving skills",
+            "Experience with protocols"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "How familiar are you with Visual C++ and Windows CE? Can you discuss any projects where you utilized these technologies, and how they contributed to your overall project management?",
+          "question_type": "clarification",
+          "phase": "technical",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Visual C++",
+            "Windows CE",
+            "Project management"
+          ],
+          "evaluation_criteria": [
+            "Depth of knowledge",
+            "Experience with specific technologies",
+            "Relevance to job requirements"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "In your role as a Firmware and Hardware Engineer, how did you collaborate with team members using project management tools like Jira? Can you provide examples of how this collaboration influenced project outcomes?",
+          "question_type": "behavioral",
+          "phase": "technical",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 7,
+          "skill_focus": [
+            "Collaboration",
+            "Jira",
+            "Team communication"
+          ],
+          "evaluation_criteria": [
+            "Communication skills",
+            "Teamwork",
+            "Experience with project management tools"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        }
+      ],
+      "backup_questions": [],
+      "key_evaluation_points": [
+        "Technical accuracy and depth",
+        "Problem-solving methodology",
+        "Code quality and best practices awareness",
+        "Technology stack alignment"
+      ],
+      "success_criteria": [
+        "Demonstrates required technical competencies",
+        "Shows clear problem-solving approach",
+        "Articulates technical concepts effectively"
+      ]
+    },
+    {
+      "phase": "experience",
+      "section_name": "Professional Experience",
+      "description": "Deep dive into work history and achievements",
+      "objectives": [
+        "Validate resume claims",
+        "Understand work approach",
+        "Assess leadership potential",
+        "Evaluate cultural fit"
+      ],
+      "estimated_duration_minutes": 15,
+      "questions": [
+        {
+          "question_text": "Can you describe a project where you utilized Embedded C and FreeRTOS? What were your specific contributions and the challenges you faced?",
+          "question_type": "open_ended",
+          "phase": "experience",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 10,
+          "skill_focus": [
+            "Embedded C",
+            "FreeRTOS",
+            "Project Management"
+          ],
+          "evaluation_criteria": [
+            "Understanding of embedded systems",
+            "Problem-solving skills",
+            "Ability to communicate technical details"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "What debugging techniques do you typically use when working with embedded systems? Can you provide an example of a complex issue you resolved?",
+          "question_type": "technical",
+          "phase": "experience",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 10,
+          "skill_focus": [
+            "Debugging",
+            "Embedded Systems",
+            "Problem-solving"
+          ],
+          "evaluation_criteria": [
+            "Depth of technical knowledge",
+            "Analytical thinking",
+            "Experience with troubleshooting"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "How have you integrated peripherals using I2C and SPI in your previous roles? Can you discuss a specific instance where this was critical to a project's success?",
+          "question_type": "behavioral",
+          "phase": "experience",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 10,
+          "skill_focus": [
+            "I2C",
+            "SPI",
+            "Peripheral Integration"
+          ],
+          "evaluation_criteria": [
+            "Hands-on experience",
+            "Technical competence",
+            "Collaboration in team settings"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Imagine you are facing a tight deadline on a firmware project, and you encounter a major bug. How would you prioritize your tasks and communicate with your team?",
+          "question_type": "situational",
+          "phase": "experience",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 10,
+          "skill_focus": [
+            "Project Management",
+            "Team Communication",
+            "Problem-solving"
+          ],
+          "evaluation_criteria": [
+            "Decision-making process",
+            "Leadership potential",
+            "Team collaboration skills"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Can you clarify your experience with Visual C++ and Windows CE? How do you see these skills contributing to your success in this role?",
+          "question_type": "clarification",
+          "phase": "experience",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Visual C++",
+            "Windows CE"
+          ],
+          "evaluation_criteria": [
+            "Relevance of skills",
+            "Understanding of job requirements",
+            "Willingness to learn"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        }
+      ],
+      "backup_questions": [],
+      "key_evaluation_points": [
+        "Experience relevance to role",
+        "Achievement impact and scale",
+        "Leadership and collaboration skills",
+        "Career progression logic"
+      ],
+      "success_criteria": [
+        "Provides concrete examples of achievements",
+        "Shows progression in responsibilities",
+        "Demonstrates relevant experience depth"
+      ]
+    },
+    {
+      "phase": "behavioral",
+      "section_name": "Behavioral & Cultural Fit",
+      "description": "Assess soft skills, work style, and cultural alignment",
+      "objectives": [
+        "Assess soft skills",
+        "Evaluate cultural fit",
+        "Understand work style",
+        "Test emotional intelligence"
+      ],
+      "estimated_duration_minutes": 15,
+      "questions": [
+        {
+          "question_text": "Can you describe a challenging project you worked on involving embedded systems? What was your role, and how did you overcome the obstacles you faced?",
+          "question_type": "behavioral",
+          "phase": "behavioral",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "embedded systems design",
+            "problem-solving",
+            "team collaboration"
+          ],
+          "evaluation_criteria": [
+            "ability to articulate challenges",
+            "approach to problem-solving",
+            "team dynamics"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Tell me about a time when you had to debug a complex embedded system. What steps did you take to identify and resolve the issue?",
+          "question_type": "behavioral",
+          "phase": "behavioral",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "debugging techniques",
+            "troubleshooting",
+            "technical expertise"
+          ],
+          "evaluation_criteria": [
+            "methodical approach",
+            "technical depth",
+            "outcome of the debugging process"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Describe a situation where you had to integrate multiple peripherals using I2C or SPI. What was the project, and what challenges did you encounter?",
+          "question_type": "situational",
+          "phase": "behavioral",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "peripheral integration",
+            "embedded systems",
+            "technical communication"
+          ],
+          "evaluation_criteria": [
+            "specifics of integration process",
+            "problem-solving during integration",
+            "collaboration with others"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "How do you prioritize tasks when working on multiple projects simultaneously? Can you provide an example from your experience?",
+          "question_type": "open_ended",
+          "phase": "behavioral",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "project management",
+            "time management",
+            "collaboration"
+          ],
+          "evaluation_criteria": [
+            "ability to prioritize",
+            "examples of effective time management",
+            "impact on project outcomes"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "In your previous role, how did you handle feedback from team members or supervisors regarding your work? Can you share a specific instance?",
+          "question_type": "behavioral",
+          "phase": "behavioral",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "emotional intelligence",
+            "communication skills",
+            "team dynamics"
+          ],
+          "evaluation_criteria": [
+            "receptiveness to feedback",
+            "adaptability",
+            "impact on team relationships"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        }
+      ],
+      "backup_questions": [],
+      "key_evaluation_points": [
+        "Cultural fit with team and company",
+        "Emotional intelligence and self-awareness",
+        "Conflict resolution and communication skills",
+        "Growth mindset and adaptability"
+      ],
+      "success_criteria": [
+        "Aligns with company values and culture",
+        "Shows self-awareness and emotional maturity",
+        "Demonstrates effective communication skills"
+      ]
+    },
+    {
+      "phase": "closing",
+      "section_name": "Closing & Next Steps",
+      "description": "Answer questions and assess continued interest",
+      "objectives": [
+        "Answer candidate questions",
+        "Gauge continued interest",
+        "Explain next steps",
+        "Leave positive impression"
+      ],
+      "estimated_duration_minutes": 5,
+      "questions": [
+        {
+          "question_text": "Can you describe your experience with Visual C++ and how it relates to your work in embedded systems? What specific projects have you used it for?",
+          "question_type": "open_ended",
+          "phase": "closing",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Visual C++",
+            "Embedded Systems Design"
+          ],
+          "evaluation_criteria": [
+            "Depth of experience with Visual C++",
+            "Relevance to embedded systems",
+            "Specific examples of projects"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Tell me about a challenging debugging scenario you faced in your previous role. What techniques did you use to troubleshoot the issue?",
+          "question_type": "behavioral",
+          "phase": "closing",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Debugging Techniques",
+            "Problem Solving"
+          ],
+          "evaluation_criteria": [
+            "Clarity of the scenario",
+            "Effectiveness of techniques used",
+            "Outcome of the situation"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "In your experience, how have you integrated peripherals using I2C and SPI? Can you give specific examples of the challenges you encountered?",
+          "question_type": "technical",
+          "phase": "closing",
+          "difficulty_level": 4,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "I2C",
+            "SPI",
+            "Peripheral Integration"
+          ],
+          "evaluation_criteria": [
+            "Understanding of protocols",
+            "Specific challenges faced",
+            "Solutions implemented"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "Imagine you are leading a project using Jira for task management. How would you prioritize tasks and ensure effective collaboration within your team?",
+          "question_type": "situational",
+          "phase": "closing",
+          "difficulty_level": 3,
+          "estimated_time_minutes": 5,
+          "skill_focus": [
+            "Project Management",
+            "Collaboration"
+          ],
+          "evaluation_criteria": [
+            "Approach to task prioritization",
+            "Strategies for team collaboration",
+            "Awareness of project management tools"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        },
+        {
+          "question_text": "What questions do you have about the Embedded Software Engineer position or our team dynamics? How do you see yourself contributing to our projects?",
+          "question_type": "follow_up",
+          "phase": "closing",
+          "difficulty_level": 2,
+          "estimated_time_minutes": 5,
+          "skill_focus": [],
+          "evaluation_criteria": [
+            "Engagement with the role",
+            "Understanding of team dynamics",
+            "Interest in contributing"
+          ],
+          "follow_up_questions": [],
+          "excellent_response_indicators": [],
+          "red_flag_indicators": []
+        }
+      ],
+      "backup_questions": [],
+      "key_evaluation_points": [
+        "Quality of questions asked",
+        "Continued interest in role",
+        "Salary and logistics alignment",
+        "Professional closing impression"
+      ],
+      "success_criteria": [
+        "Asks thoughtful questions about role/company",
+        "Maintains enthusiasm throughout interview",
+        "Clear on expectations and next steps"
+      ]
+    }
+  ],
+  "total_estimated_duration_minutes": 60,
+  "interview_objectives": [
+    "Assess the candidate's proficiency in embedded C and C++ programming.",
+    "Evaluate the candidate's experience with RTOS and their ability to work with FreeRTOS.",
+    "Determine the candidate's familiarity with Visual C++ and Windows CE.",
+    "Understand the candidate's debugging skills and experience with peripheral integration.",
+    "Explore the candidate's experience with version control systems, specifically Git."
+  ],
+  "key_focus_areas": [
+    "Embedded systems design and development experience.",
+    "Debugging techniques and problem-solving approaches.",
+    "Integration of peripherals using I2C, SPI, and UART.",
+    "Experience with project management tools like Jira.",
+    "Collaboration and communication skills in a team environment."
+  ],
+  "evaluation_priorities": [
+    "Technical expertise in embedded systems and programming languages.",
+    "Hands-on experience with relevant tools and technologies.",
+    "Ability to troubleshoot and resolve complex issues.",
+    "Cultural fit and alignment with team dynamics.",
+    "Willingness to learn and adapt to new technologies."
+  ],
+  "potential_red_flags": [
+    "Inconsistent work history or frequent job changes.",
+    "Lack of hands-on experience with required technologies.",
+    "Difficulty explaining past projects or technical decisions.",
+    "Poor communication skills or inability to work in a team.",
+    "Limited understanding of version control practices."
+  ],
+  "clarification_needed": [
+    "Clarify the candidate's experience with Visual C++ and Windows CE.",
+    "Explore any gaps in experience with specific technologies listed in the job requirements.",
+    "Discuss the candidate's approach to debugging and troubleshooting.",
+    "Understand the candidate's experience with project management methodologies.",
+    "Inquire about any specific projects that demonstrate their technical skills."
+  ],
+  "interviewer_notes": [
+    "Encourage the candidate to provide specific examples from past experiences.",
+    "Take note of the candidate's problem-solving approach during technical questions.",
+    "Assess the candidate's enthusiasm for the role and the company.",
+    "Evaluate how well the candidate can explain complex technical concepts.",
+    "Consider the candidate's potential for growth and development within the team."
+  ],
+  "recommended_follow_up_areas": [
+    "Further technical assessment on Visual C++ and Windows CE.",
+    "Deep dive into specific projects involving FreeRTOS.",
+    "Discussion on the candidate's experience with Agile methodologies.",
+    "Assessment of soft skills and team collaboration in a follow-up interview.",
+    "Exploration of the candidate's long-term career goals and alignment with the company."
+  ]
+}

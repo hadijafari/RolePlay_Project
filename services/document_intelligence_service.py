@@ -72,7 +72,7 @@ class DocumentIntelligenceConfig:
     
     # Processing settings
     USE_VISION_MODEL = True  # Use GPT-4V for PDF analysis
-    MULTI_PASS_ANALYSIS = True  # Multiple analysis passes for accuracy
+    MULTI_PASS_ANALYSIS = False  # Multiple analysis passes for accuracy
     STRUCTURED_OUTPUT_ENFORCEMENT = True  # Enforce JSON structure
     
     # Performance settings
@@ -309,7 +309,7 @@ class DocumentIntelligenceService:
         
         Uses structured outputs and multi-pass analysis for maximum accuracy.
         """
-        
+        print("=" * 80)
         start_time = time.time()
         self.stats["documents_processed"] += 1
         
@@ -323,12 +323,15 @@ class DocumentIntelligenceService:
             
             # Extract content
             text_content, extraction_metadata = self.extract_document_content(file_path)
-            
+            # print(f"In analyze_resume method of Document Intelligence Service: Extracted content from {text_content}")
+
             # Perform AI-powered analysis
             if self.config.USE_VISION_MODEL and Path(file_path).suffix.lower() == '.pdf':
+                print(f"In analyze_resume method of Document Intelligence Service: Vision model used for analysis")
                 resume_analysis = await self._analyze_resume_with_vision(file_path, text_content)
                 self.stats["vision_model_used"] += 1
             else:
+                print(f"In analyze_resume method of Document Intelligence Service: Text model used for analysis")
                 resume_analysis = await self._analyze_resume_with_text(text_content)
                 self.stats["text_model_used"] += 1
             
@@ -410,6 +413,13 @@ class DocumentIntelligenceService:
         """Analyze resume using text-based AI model with structured outputs."""
         
         system_prompt = """You are an expert resume analysis AI. Your job is to extract structured information from resumes with high accuracy.
+
+CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+- Replace any special characters from the source document with ASCII equivalents
 
 CRITICAL: You MUST return a valid JSON response that exactly matches this ResumeAnalysis schema:
 
@@ -559,6 +569,11 @@ Return the complete JSON response following the ResumeAnalysis schema exactly.""
             
             # Parse structured response
             response_content = response.choices[0].message.content
+            # print(f"In _analyze_resume_with_text method of Document Intelligence Service: AI Response: {response_content}")
+            # saving the response_content into a file in the filepath
+            # with open("D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\first_AI_analysis_response.txt", "w", encoding="utf-8") as f:
+            #     f.write(response_content)
+            # print(f"In _analyze_resume_with_text method of Document Intelligence Service: AI Response saved to file")
             self.logger.debug(f"AI Response (first 500 chars): {response_content[:500]}")
             
             # Try to extract JSON from response
@@ -646,6 +661,10 @@ Return the refined analysis in JSON format."""
             # Parse refined response
             response_content = response.choices[0].message.content
             json_data = self._extract_json_from_response(response_content)
+            # with open("D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\second_refined_AI_analysis_response.txt", "w", encoding="utf-8") as f:
+            #     f.write(response_content)
+            # # print(f"In _refine_resume_analysis method of Document Intelligence Service: Extracted JSON from response: {json_data}")
+            # print(f"In _refine_resume_analysis method of Document Intelligence Service: Refined AI Response saved to file")
             
             # Clean datetime objects from refined data
             if 'analysis_timestamp' in json_data:
@@ -706,6 +725,13 @@ Return the refined analysis in JSON format."""
         """Analyze job description using AI with structured outputs."""
         
         system_prompt = """You are an expert job description analyzer. Extract structured information from job postings with high accuracy.
+
+CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+- Replace any special characters from the source document with ASCII equivalents
 
 CRITICAL: You MUST return a valid JSON response that exactly matches this JobDescriptionAnalysis schema:
 

@@ -103,6 +103,12 @@ class InterviewConductorAgent(BaseAgent):
         
         instructions = f"""You are a Professional Interview Conductor AI. You are conducting a structured interview based on a detailed interview plan.
 
+CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+
 INTERVIEW OVERVIEW:
 - Total Sections: {len(interview_plan.interview_sections)}
 - Estimated Duration: {interview_plan.total_estimated_duration_minutes} minutes

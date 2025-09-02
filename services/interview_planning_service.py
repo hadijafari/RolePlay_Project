@@ -82,7 +82,7 @@ class InterviewPlanningService:
     
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the interview planning service."""
-        
+        print("interview_planning_service.py: Class InterviewPlanningService.__init__ called: Initialize the interview planning service.")
         self.config = InterviewPlanningConfig()
         self.logger = self._setup_logger()
         
@@ -232,12 +232,18 @@ class InterviewPlanningService:
             interview_strategy = await self._generate_interview_strategy(
                 resume_analysis, job_analysis, candidate_match, custom_requirements
             )
-            
+            # save to file
+            with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_strategy_{datetime.now().strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
+                f.write(json.dumps(interview_strategy, indent=2, default=str))
+            print(f"In generate_interview_plan method of InterviewPlanningService: Interview strategy saved to file")
             # Create interview sections
             interview_sections = await self._create_interview_sections(
                 interview_strategy, resume_analysis, job_analysis, duration
             )
-            
+            # save to file
+            with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_sections_{datetime.now().strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
+                f.write(json.dumps(interview_sections, indent=2, default=str))
+            print(f"In generate_interview_plan method of InterviewPlanningService: Interview sections saved to file")
             # Generate detailed questions for each section
             for section in interview_sections:
                 await self._generate_section_questions(
@@ -259,7 +265,10 @@ class InterviewPlanningService:
                 interviewer_notes=interview_strategy["interviewer_notes"],
                 recommended_follow_up_areas=interview_strategy["follow_up_areas"]
             )
-            
+            # save to file
+            # with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_plan_{datetime.now().strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
+            #     f.write(json.dumps(interview_plan.model_dump(mode='json'), indent=2))
+            # print(f"In generate_interview_plan method of InterviewPlanningService: Interview plan saved to file")
             # Calculate statistics
             total_questions = sum(len(section.questions) for section in interview_sections)
             self.stats["custom_questions_generated"] += total_questions
@@ -306,7 +315,13 @@ class InterviewPlanningService:
         """Generate interview strategy based on analysis data."""
         
         # Build context for AI strategy generation
-        context_prompt = f"""Based on the following candidate and job analysis, generate an interview strategy:
+        context_prompt = f"""CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+
+Based on the following candidate and job analysis, generate an interview strategy:
 
 CANDIDATE BACKGROUND:
 - Technical Skills: {', '.join([skill.skill_name for skill in resume_analysis.technical_skills[:10]])}
@@ -341,7 +356,7 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
                 self.client.chat.completions.create,
                 model=self.config.MODEL,
                 messages=[
-                    {"role": "system", "content": "You are an expert interview strategist. Generate comprehensive interview strategies based on candidate and job analysis."},
+                    {"role": "system", "content": "You are an expert interview strategist. Generate comprehensive interview strategies based on candidate and job analysis. CRITICAL: Use ONLY standard ASCII characters - no Unicode symbols, checkmarks, bullet points, or special characters. Use simple text formatting with regular quotes and apostrophes."},
                     {"role": "user", "content": context_prompt}
                 ],
                 max_tokens=self.config.MAX_TOKENS,
@@ -583,7 +598,13 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
         """Generate specific questions for an interview section."""
         
         # Build context for question generation
-        question_prompt = f"""Generate {self.config.QUESTIONS_PER_SECTION} interview questions for the {section.section_name} section.
+        question_prompt = f"""CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+
+Generate {self.config.QUESTIONS_PER_SECTION} interview questions for the {section.section_name} section.
 
 SECTION DETAILS:
 - Phase: {section.phase.value}
@@ -632,7 +653,7 @@ Format as JSON array with objects containing: question_text, question_type (one 
                 self.client.chat.completions.create,
                 model=self.config.MODEL,
                 messages=[
-                    {"role": "system", "content": f"You are an expert interview question generator specializing in {section.phase.value} questions."},
+                    {"role": "system", "content": f"You are an expert interview question generator specializing in {section.phase.value} questions. CRITICAL: Use ONLY standard ASCII characters - no Unicode symbols, checkmarks, bullet points, or special characters. Use simple text formatting with regular quotes and apostrophes."},
                     {"role": "user", "content": question_prompt}
                 ],
                 max_tokens=2000,

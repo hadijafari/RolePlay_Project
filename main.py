@@ -20,6 +20,7 @@ import threading
 import logging
 from datetime import datetime
 from pathlib import Path
+import json
 
 try:
     import pyaudio
@@ -75,6 +76,7 @@ class EnhancedInterviewPlatform:
     """
     
     def __init__(self, minimal_logging: bool = True):
+        print(f"main.py: Class EnhancedInterviewPlatform.__init__ called: Initialize the enhanced interview platform")
         self.minimal_logging = minimal_logging
         
         # Document analysis state
@@ -111,6 +113,7 @@ class EnhancedInterviewPlatform:
     
     def update_recorder_interview_components(self):
         """Update recorder with interview components after they're created."""
+        print(f"main.py: Class EnhancedInterviewPlatform.update_recorder_interview_components called: Update recorder with interview components after they're created.")
         if hasattr(self, 'recorder'):
             self.recorder.interview_conductor = self.interview_conductor
             self.recorder.interview_plan = self.interview_plan
@@ -118,7 +121,8 @@ class EnhancedInterviewPlatform:
     
     def _initialize_core_services(self):
         """Initialize core STT and TTS services."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform._initialize_core_services called: Initialize core STT and TTS services.")
         # Initialize STT service
         try:
             self.stt_service = STTService()
@@ -139,9 +143,15 @@ class EnhancedInterviewPlatform:
     
     def _initialize_enhanced_services(self):
         """Initialize enhanced AI services for document analysis and interview planning."""
+
+
+        # print("\n" + "=" * 80)
+        # print("I AM HERE START START START START START START START START START START START START START START START START START")
         
+        print(f"main.py: Class EnhancedInterviewPlatform._initialize_enhanced_services called: Initialize enhanced AI services for document analysis and interview planning.")
         try:
             # Initialize document intelligence agent
+            print("Initialize document intelligence agent")
             self.document_agent = DocumentIntelligenceAgent()
             if not self.minimal_logging:
                 print("✅ Document Intelligence Agent initialized")
@@ -151,6 +161,7 @@ class EnhancedInterviewPlatform:
         
         try:
             # Initialize interview planning service
+            print("Initialize interview planning service")
             self.interview_planning_service = InterviewPlanningService()
             if not self.minimal_logging:
                 print("✅ Interview Planning Service initialized")
@@ -167,12 +178,16 @@ class EnhancedInterviewPlatform:
             print(f"⚠️  Context Injection Service initialization failed: {e}")
             self.context_service = None
         
+
+        # print("\n" + "=" * 80)
+        # print("I AM HERE END END END END END END END END END END END END END END END END END END END END END END END END END END END END END END END")
         # Interview conductor will be initialized after interview plan is created
         self.interview_conductor = None
     
     def display_welcome(self):
         """Display enhanced welcome message with feature overview."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform.display_welcome called: Display enhanced welcome message with feature overview.")
         print("\n" + "=" * 80)
         print("🎤 ENHANCED AI INTERVIEW PLATFORM")
         print("=" * 80)
@@ -213,7 +228,8 @@ class EnhancedInterviewPlatform:
     
     def setup_keyboard_handlers(self):
         """Set up keyboard event handlers."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform.setup_keyboard_handlers called: Set up keyboard event handlers.")
         # Tab key handlers for audio recording
         keyboard.on_press_key('tab', self._on_tab_press)
         keyboard.on_release_key('tab', self._on_tab_release)
@@ -221,7 +237,7 @@ class EnhancedInterviewPlatform:
         # Ctrl+C handler for exit (handled by KeyboardInterrupt in main loop)
     
     def _on_tab_press(self, event):
-        """Handle tab key press for recording."""
+        """Handle tab key press for recording."""   
         if not self.recorder.is_recording:
             self.recorder.start_recording()
     
@@ -232,7 +248,7 @@ class EnhancedInterviewPlatform:
     
     async def run(self):
         """Main application loop with enhanced features."""
-        
+        print(f"main.py: Class EnhancedInterviewPlatform.run called: Main application loop with enhanced features.")
         try:
             # Check microphone access
             if not self.recorder.check_microphone_access():
@@ -294,7 +310,8 @@ class EnhancedInterviewPlatform:
     
     async def _run_enhanced_mode(self):
         """Run application in enhanced mode with automatic setup."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform._run_enhanced_mode called: Run application in enhanced mode with automatic setup.")
         # Automatically set up the interview
         setup_success = await self._automatic_interview_setup()
         
@@ -317,7 +334,8 @@ class EnhancedInterviewPlatform:
     
     async def _run_basic_mode(self):
         """Run application in basic mode (original functionality)."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform._run_basic_mode called: Run application in basic mode (original functionality).")
         print("\n📝 Basic Mode: Audio recording and transcription only")
         print("Hold TAB to record, release to stop and transcribe")
         print("Press Ctrl+C to exit")
@@ -327,7 +345,7 @@ class EnhancedInterviewPlatform:
     
     async def _cleanup(self):
         """Clean up all resources."""
-        
+        print(f"main.py: Class EnhancedInterviewPlatform._cleanup called: Clean up all resources.")
         print("🧹 Cleaning up...")
         
         # Cleanup recorder
@@ -346,7 +364,8 @@ class EnhancedInterviewPlatform:
     
     def _display_final_stats(self):
         """Display final statistics before exit."""
-        
+
+        print(f"main.py: Class EnhancedInterviewPlatform._display_final_stats called: Display final statistics before exit.")
         print("\n📊 FINAL SESSION STATISTICS")
         print("=" * 50)
         
@@ -373,8 +392,19 @@ class EnhancedInterviewPlatform:
             progress = self.interview_conductor.get_interview_progress()
             print(f"Interview: {progress['interview_status']['completion_percentage']:.1f}% completed")
     
+    def _find_file_with_extensions(self, directory: Path, base_name: str, extensions: list) -> Path:
+        """Find a file with the given base name and any of the supported extensions."""
+        print(f"main.py: Class EnhancedInterviewPlatform._find_file_with_extensions called: Find a file with the given base name and any of the supported extensions.")
+        for ext in extensions:
+            file_path = directory / f"{base_name}{ext}"
+            if file_path.exists():
+                return file_path
+        return None
+
     async def _automatic_interview_setup(self):
         """Automatically set up interview by loading documents from RAG directory."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._automatic_interview_setup called: Automatically set up interview by loading documents from RAG directory.")
         print("\n🚀 AUTOMATIC INTERVIEW SETUP")
         print("=" * 50)
         
@@ -388,26 +418,29 @@ class EnhancedInterviewPlatform:
             
             print(f"📁 Loading documents from: {rag_dir}")
             
+            # Supported file extensions
+            supported_extensions = ['.pdf', '.docx', '.txt']
+            
             # Step 1: Load and analyze resume
-            resume_path = rag_dir / "resume.pdf"
-            if resume_path.exists():
+            resume_path = self._find_file_with_extensions(rag_dir, "resume", supported_extensions)
+            if resume_path:
                 print(f"📄 Processing resume: {resume_path}")
                 success = await self._auto_process_resume(str(resume_path))
                 if not success:
                     return False
             else:
-                print(f"❌ Resume not found: {resume_path}")
+                print(f"❌ Resume not found. Looking for: resume.pdf, resume.docx, or resume.txt in {rag_dir}")
                 return False
             
             # Step 2: Load and analyze job description  
-            job_desc_path = rag_dir / "description.txt"
-            if job_desc_path.exists():
+            job_desc_path = self._find_file_with_extensions(rag_dir, "description", supported_extensions)
+            if job_desc_path:
                 print(f"📋 Processing job description: {job_desc_path}")
                 success = await self._auto_process_job_description(str(job_desc_path))
                 if not success:
                     return False
             else:
-                print(f"❌ Job description not found: {job_desc_path}")
+                print(f"❌ Job description not found. Looking for: description.pdf, description.docx, or description.txt in {rag_dir}")
                 return False
             
             # Step 3: Create interview plan automatically
@@ -433,6 +466,8 @@ class EnhancedInterviewPlatform:
     
     async def _auto_process_resume(self, file_path: str):
         """Automatically process resume using existing functions."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._auto_process_resume called: Automatically process resume using existing functions.")
         try:
             print("⏳ Analyzing resume...")
             
@@ -445,6 +480,7 @@ class EnhancedInterviewPlatform:
             
             if analysis_result.success:
                 # Extract resume analysis from metadata - works for all document types
+                print(f"In _auto_process_resume method of EnhancedInterviewPlatform: Almost done with resume analysis")
                 if hasattr(analysis_result, 'metadata') and 'resume_analysis' in analysis_result.metadata:
                     # Get from metadata (preferred)
                     resume_data = analysis_result.metadata['resume_analysis']
@@ -466,7 +502,12 @@ class EnhancedInterviewPlatform:
                 
                 print(f"✅ Resume analysis completed")
                 print(f"   📊 Skills identified: {len(self.resume_analysis.technical_skills)}")
-                
+                # the file name should be resume_analysis_date
+                with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\resume_analysis_{self.resume_analysis.analysis_timestamp.strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
+                    f.write(json.dumps(self.resume_analysis.model_dump(mode='json'), indent=2))
+                print(f"In _auto_process_resume method of EnhancedInterviewPlatform: Resume analysis saved to file")
+
+
                 # Safely access experience years - works for all document types
                 try:
                     if self.resume_analysis.career_progression:
@@ -490,6 +531,8 @@ class EnhancedInterviewPlatform:
     
     async def _auto_process_job_description(self, file_path: str):
         """Automatically process job description using existing functions."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._auto_process_job_description called: Automatically process job description using existing functions.")
         try:
             print("⏳ Analyzing job description...")
             
@@ -535,6 +578,9 @@ class EnhancedInterviewPlatform:
                     if self.job_description_analysis.company_info and self.job_description_analysis.company_info.company_name:
                         company_name = self.job_description_analysis.company_info.company_name
                         print(f"   🏢 Company: {company_name}")
+                        with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\job_description_analysis_{self.job_description_analysis.analysis_timestamp.strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
+                            f.write(json.dumps(self.job_description_analysis.model_dump(mode='json'), indent=2))
+                        print(f"In _auto_process_job_description method of EnhancedInterviewPlatform: Job description analysis saved to file")
                     else:
                         print(f"   🏢 Company: Not specified")
                 except AttributeError:
@@ -553,6 +599,8 @@ class EnhancedInterviewPlatform:
     
     async def _auto_create_interview_plan(self):
         """Automatically create interview plan using existing functions."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._auto_create_interview_plan called: Automatically create interview plan using existing functions.")
         try:
             if not self.resume_analysis or not self.job_description_analysis:
                 print("❌ Missing document analysis data")
@@ -567,6 +615,7 @@ class EnhancedInterviewPlatform:
                 self.resume_analysis,
                 self.job_description_analysis
             )
+            
             
             if planning_result.success:
                 # Extract interview plan from result_data - works for all document types
@@ -585,6 +634,11 @@ class EnhancedInterviewPlatform:
                 try:
                     from models.interview_models import InterviewPlan
                     self.interview_plan = InterviewPlan(**plan_data)
+                    # save to file
+                    with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_plan_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt", "w", encoding="utf-8") as f:
+                        f.write(json.dumps(self.interview_plan.model_dump(mode='json'), indent=2, default=str))    
+                        
+                    print(f"In _auto_create_interview_plan method of EnhancedInterviewPlatform: Interview plan saved to file")
                 except Exception as e:
                     print(f"❌ Failed to create InterviewPlan object: {e}")
                     return False
@@ -606,11 +660,11 @@ class EnhancedInterviewPlatform:
                     print(f"   ⏱️  Duration: Not specified")
                 
                 # Print detailed interview plan
-                print("\n" + "="*80)
-                print("📋 DETAILED INTERVIEW PLAN")
-                print("="*80)
-                self._print_detailed_interview_plan()
-                print("="*80)
+                # print("\n" + "="*80)
+                # print("📋 DETAILED INTERVIEW PLAN")
+                # print("="*80)
+                # self._print_detailed_interview_plan()
+                # print("="*80)
                 
                 # Initialize interview conductor now that we have the plan
                 try:
@@ -637,6 +691,8 @@ class EnhancedInterviewPlatform:
     
     def _print_detailed_interview_plan(self):
         """Print the complete interview plan in a detailed, readable format."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._print_detailed_interview_plan called: Print the complete interview plan in a detailed, readable format.")
         try:
             if not self.interview_plan:
                 print("❌ No interview plan available to display")
@@ -741,6 +797,8 @@ class EnhancedInterviewPlatform:
     
     async def _auto_start_interview(self):
         """Automatically start interview using existing functions."""
+
+        print(f"main.py: Class EnhancedInterviewPlatform._auto_start_interview called: Automatically start interview using existing functions.")
         try:
             if not self.interview_plan:
                 print("❌ Interview plan not available")
@@ -797,6 +855,7 @@ class EnhancedAudioRecorder:
     
     def __init__(self, stt_service=None, tts_service=None, document_agent=None, 
                  interview_conductor=None, interview_plan=None):
+        print(f"main.py: Class EnhancedAudioRecorder.__init__ called: Initialize the enhanced audio recorder.")
         # Initialize base recorder functionality
         self.audio = pyaudio.PyAudio()
         self.config = AudioConfig()
@@ -828,6 +887,7 @@ class EnhancedAudioRecorder:
     
     def check_microphone_access(self):
         """Test microphone access (same as original)."""
+        print(f"main.py: Class EnhancedAudioRecorder.check_microphone_access called: Test microphone access (same as original).")
         try:
             print("Interview Platform: Checking microphone access...")
             
@@ -858,6 +918,7 @@ class EnhancedAudioRecorder:
     
     def start_recording(self):
         """Start recording with enhanced logging."""
+        print(f"main.py: Class EnhancedAudioRecorder.start_recording called: Start recording with enhanced logging.")
         if self.is_recording:
             return
         
@@ -878,6 +939,7 @@ class EnhancedAudioRecorder:
     
     def stop_recording(self):
         """Stop recording and start transcription."""
+        print(f"main.py: Class EnhancedAudioRecorder.stop_recording called: Stop recording and start transcription.")
         if not self.is_recording:
             return
         
@@ -901,6 +963,7 @@ class EnhancedAudioRecorder:
     
     def _record_audio(self):
         """Record audio data (same as original implementation)."""
+        print(f"main.py: Class EnhancedAudioRecorder._record_audio called: Record audio data (same as original implementation).")
         try:
             stream = self.audio.open(
                 format=self.config.FORMAT,
@@ -928,6 +991,7 @@ class EnhancedAudioRecorder:
     
     def _save_recording(self):
         """Save recorded audio frames to file."""
+        print(f"main.py: Class EnhancedAudioRecorder._save_recording called: Save recorded audio frames to file.")
         try:
             self.current_filepath = os.path.join(self.config.RECORDINGS_DIR, self.current_filename)
             
@@ -965,6 +1029,7 @@ class EnhancedAudioRecorder:
     
     def _start_transcription(self):
         """Start transcription in a separate thread."""
+        print(f"main.py: Class EnhancedAudioRecorder._start_transcription called: Start transcription in a separate thread.")
         if self.transcription_thread and self.transcription_thread.is_alive():
             print("⚠️  Previous transcription still in progress")
             return
@@ -978,6 +1043,7 @@ class EnhancedAudioRecorder:
     
     def _transcribe_and_process(self):
         """Enhanced transcription with interview context processing."""
+        print(f"main.py: Class EnhancedAudioRecorder._transcribe_and_process called: Enhanced transcription with interview context processing.")
         try:
             if not self.current_filepath or not os.path.exists(self.current_filepath):
                 print("⚠️  No valid audio file for transcription")
@@ -1020,6 +1086,7 @@ class EnhancedAudioRecorder:
 
     async def _process_with_interview_conductor(self, transcription_text: str):
         """Process candidate response with interview conductor."""
+        print(f"main.py: Class EnhancedAudioRecorder._process_with_interview_conductor called: Process candidate response with interview conductor.")
         try:
             # Validate that conductor and plan are properly initialized
             if not self.interview_conductor or not self.interview_plan:
@@ -1082,6 +1149,7 @@ class EnhancedAudioRecorder:
     
     def _process_with_interview_conductor_sync(self, transcription_text: str):
         """Synchronous version of interview conductor processing for use in threads."""
+        print(f"main.py: Class EnhancedAudioRecorder._process_with_interview_conductor_sync called: Synchronous version of interview conductor processing for use in threads.")
         try:
             # Validate that conductor and plan are properly initialized
             if not self.interview_conductor or not self.interview_plan:
@@ -1174,6 +1242,7 @@ class EnhancedAudioRecorder:
     
     async def _handle_interview_completion(self):
         """Handle interview completion and generate summary."""
+        print(f"main.py: Class EnhancedAudioRecorder._handle_interview_completion called: Handle interview completion and generate summary.")
         try:
             print("\n🎉 INTERVIEW COMPLETED!")
             print("=" * 50)
@@ -1207,6 +1276,7 @@ class EnhancedAudioRecorder:
     
     def _save_transcript(self, transcription_text: str, stt_result: dict):
         """Save transcription to file."""
+        print(f"main.py: Class EnhancedAudioRecorder._save_transcript called: Save transcription to file.")
         try:
             if not self.stt_config.SAVE_TRANSCRIPTS:
                 return
@@ -1240,6 +1310,7 @@ class EnhancedAudioRecorder:
 
 def main():
     """Entry point for the enhanced application."""
+    print(f"main.py: Class main called: Entry point for the enhanced application.")
     try:
         # Create and run enhanced platform
         app = EnhancedInterviewPlatform(minimal_logging=False)
@@ -1250,4 +1321,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print(f"main.py: Class __name__ == __main__ called: Entry point for the enhanced application.")
     main()

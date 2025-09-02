@@ -259,7 +259,7 @@ class InterviewPlan(BaseModel):
     
     # Interview structure
     interview_sections: List[InterviewSection] = Field(default_factory=list)
-    total_estimated_duration_minutes: int = 60
+    total_estimated_duration_minutes: int = 30
     
     # Interview strategy
     interview_objectives: List[str] = Field(default_factory=list)

@@ -51,7 +51,7 @@ class DocumentIntelligenceAgent(BaseAgent):
             name: Agent name
             model: OpenAI model to use
         """
-        
+        print("document_intelligence_agent.py: Class DocumentIntelligenceAgent.__init__ called: Initialize document intelligence agent.")
         # Generate specialized instructions for document analysis
         instructions = self._generate_document_analysis_instructions()
         
@@ -71,9 +71,11 @@ class DocumentIntelligenceAgent(BaseAgent):
         super().__init__(config)
         
         # Initialize document intelligence service
+        # print("Initialize document intelligence service")
         try:
             self.document_service = DocumentIntelligenceService()
             self.logger.info("Document Intelligence Service initialized successfully")
+            print("Document Intelligence Service initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to initialize Document Intelligence Service: {e}")
             self.document_service = None
@@ -85,6 +87,7 @@ class DocumentIntelligenceAgent(BaseAgent):
         self.processing_history = []
         
         self.logger.info(f"Document Intelligence Agent initialized: {name}")
+        print(f"Document Intelligence Agent initialized: {name}")
     
     def _serialize_datetime_objects(self, data):
         """Serialize datetime objects to ISO strings to prevent JSON serialization errors."""
@@ -105,6 +108,12 @@ class DocumentIntelligenceAgent(BaseAgent):
         """Generate specialized system instructions for document analysis."""
         
         return """You are a Document Intelligence AI specialized in analyzing resumes and job descriptions for interview preparation.
+
+CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
 
 YOUR EXPERTISE AREAS:
 1. **Resume Analysis**: Extract structured data including skills, experience, education, and career progression
@@ -155,7 +164,7 @@ Always provide structured, actionable insights that help improve the interview p
         Returns:
             AgentResponse with resume analysis results
         """
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent.analyze_resume called: Analyze resume file and provide structured insights.")
         try:
             self.logger.info(f"Starting resume analysis: {Path(file_path).name}")
             
@@ -193,7 +202,9 @@ Always provide structured, actionable insights that help improve the interview p
             
             # Generate human-readable analysis summary
             analysis_summary = self._generate_resume_summary(resume_analysis)
-            
+            # with open("D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\Third_summary_AI_analysis_response.txt", "w", encoding="utf-8") as f:
+            #     f.write(analysis_summary)
+            # print(f"In analyze_resume method of Document Intelligence Agent: Generated human-readable analysis summary saved to file")
             # Create structured context for agent processing
             # Serialize resume analysis data to handle datetime objects
             resume_data = self._serialize_datetime_objects(resume_analysis.dict())
@@ -210,11 +221,15 @@ Always provide structured, actionable insights that help improve the interview p
                 context_data.update(additional_context)
             
             # Process with agent for additional insights
+            print(f"In analyze_resume method of Document Intelligence Agent: Processing with agent for additional insights and recommendations")
             agent_response = await self.process_request(
                 f"Please provide detailed insights and recommendations based on this resume analysis: {analysis_summary[:500]}...",
                 context_data
             )
-            
+
+            # with open("D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\Fourth_enhanced_content_AI_analysis_response.txt", "w", encoding="utf-8") as f:
+            #     f.write(agent_response.content)
+            # print(f"In analyze_resume method of Document Intelligence Agent: Agent response saved to file")
             if agent_response.success:
                 # Combine structured data with agent insights
                 enhanced_content = f"""RESUME ANALYSIS RESULTS
@@ -225,16 +240,20 @@ STRATEGIC INSIGHTS:
 {agent_response.content}
 
 STRUCTURED DATA AVAILABLE:
-- Personal Information: ✓
+- Personal Information: Available
 - Technical Skills: {len(resume_analysis.technical_skills)} identified
 - Work Experience: {len(resume_analysis.work_experience)} positions
 - Education: {len(resume_analysis.education)} entries
 - Certifications: {len(resume_analysis.certifications)} found
-- Career Progression Analysis: {'✓' if resume_analysis.career_progression else '❌'}
+- Career Progression Analysis: {'Available' if resume_analysis.career_progression else 'Not Available'}
 
 ANALYSIS CONFIDENCE: {resume_analysis.confidence_score:.1%} ({analysis_result.confidence_score:.1%})
 PROCESSING TIME: {analysis_result.processing_time_seconds:.2f} seconds"""
                 
+                # with open("D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\Fifth_enhanced_content_AI_analysis_response.txt", "w", encoding="utf-8") as f:
+                #     f.write(enhanced_content)
+                # print(f"In analyze_resume method of Document Intelligence Agent: Enhanced content saved to file")
+                # print(f"In analyze_resume method of Document Intelligence Agent: Stored in processing history. here is the enhanced content: {enhanced_content}")
                 # Store in processing history
                 self.processing_history.append({
                     "type": "resume_analysis",
@@ -296,7 +315,7 @@ PROCESSING TIME: {analysis_result.processing_time_seconds:.2f} seconds"""
         Returns:
             AgentResponse with job description analysis results
         """
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent.analyze_job_description called: Analyze job description file and provide structured insights.")
         try:
             self.logger.info(f"Starting job description analysis: {Path(file_path).name}")
             
@@ -422,7 +441,7 @@ PROCESSING TIME: {analysis_result.processing_time_seconds:.2f} seconds"""
         Returns:
             AgentResponse with matching analysis results
         """
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent.create_candidate_match_analysis called: Create candidate-job matching analysis based on previously analyzed documents.")
         try:
             if not self.current_resume_analysis or not self.current_job_analysis:
                 return AgentResponse(
@@ -518,7 +537,7 @@ KEY FINDINGS:
     
     def _generate_resume_summary(self, resume_analysis: ResumeAnalysis) -> str:
         """Generate human-readable resume analysis summary."""
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent._generate_resume_summary called: Generate human-readable resume analysis summary.")
         summary_parts = [
             f"CANDIDATE: {resume_analysis.personal_info.full_name or 'Name not extracted'}",
             ""
@@ -575,7 +594,7 @@ KEY FINDINGS:
     
     def _generate_job_description_summary(self, job_analysis: JobDescriptionAnalysis) -> str:
         """Generate human-readable job description analysis summary."""
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent._generate_job_description_summary called: Generate human-readable job description analysis summary.")
         summary_parts = [
             f"POSITION: {job_analysis.job_title}",
             f"COMPANY: {job_analysis.company_info.company_name or 'Not specified'}",
@@ -616,7 +635,7 @@ KEY FINDINGS:
     
     def _generate_match_analysis_summary(self, candidate_match: CandidateMatch) -> str:
         """Generate human-readable candidate match analysis summary."""
-        
+        print(f"document_intelligence_agent.py: Class DocumentIntelligenceAgent._generate_match_analysis_summary called: Generate human-readable candidate match analysis summary.")
         match_level = "Excellent" if candidate_match.overall_match_score >= 0.8 else \
                      "Good" if candidate_match.overall_match_score >= 0.6 else \
                      "Fair" if candidate_match.overall_match_score >= 0.4 else "Poor"
