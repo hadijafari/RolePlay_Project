@@ -293,15 +293,28 @@ class ContextInjectionService:
         
         instructions.extend([
             "INSTRUCTIONS:",
-            "1. Ask questions appropriate for the current interview phase",
-            "2. Listen carefully to responses and ask relevant follow-up questions",
-            "3. Keep questions professional and relevant to the job requirements",
-            "4. Manage time effectively to cover all important areas",
-            "5. Adapt questions based on candidate responses and background",
+            "1. Ask the EXACT question provided in the NEXT_QUESTION field",
+            "2. You may add a brief transition, but ask the PROVIDED question",
+            "3. Listen carefully to responses and ask relevant follow-up questions",
+            "4. After follow-ups (max 2) or good answers, move to next question",
+            "5. When NEXT_QUESTION says [NO MORE QUESTIONS], wrap up the interview",
             "6. Maintain a friendly but professional tone throughout",
             "",
-            "Respond with your next question or comment based on the current context."
+            "NEXT QUESTION TO ASK:"
         ])
+        
+        # Add the specific next question
+        if "NEXT_QUESTION" in context:
+            instructions.append(f"[NEXT_QUESTION]: {context['NEXT_QUESTION']}")
+            
+            if "current_question_info" in context and context["current_question_info"]:
+                info = context["current_question_info"]
+                instructions.extend([
+                    f"Question {info.get('question_number', 0)} of {info.get('total_in_section', 0)} in current section",
+                    f"Type: {info.get('question_type', 'unknown')}",
+                    f"Focus: {', '.join(info.get('skill_focus', []))}",
+                    ""
+                ])
 
         print(f"Here is the system prompt interview instructions: {instructions}")
         return "\n".join(instructions)

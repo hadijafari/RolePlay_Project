@@ -331,6 +331,10 @@ class InterviewState(BaseModel):
     total_followups_asked: int = 0
     current_question_response_quality: float = 0.0  # 0-1 scale
     
+    # Specific question tracking
+    current_plan_question_text: Optional[str] = None  # The exact question being asked
+    plan_questions_completed: int = 0  # Number of plan questions completed
+    
     # Interview flow control
     should_continue: bool = True
     early_termination_reason: Optional[str] = None

@@ -79,10 +79,20 @@ class InterviewConductorAgent(BaseAgent):
         )
         
         # Question management
+        # self.current_section_index = 0
+        # self.current_question_index = 0
+        # self.questions_asked = []
+        # self.follow_up_queue = []
+
+        # Question management with specific question tracking
         self.current_section_index = 0
         self.current_question_index = 0
         self.questions_asked = []
         self.follow_up_queue = []
+        self.specific_questions_asked = []  # Track which plan questions were asked
+        self.current_plan_question = None  # The current question from the plan
+        self.total_plan_questions = sum(len(section.questions) for section in interview_plan.interview_sections)
+        self.plan_questions_asked_count = 0
         
         # Response evaluation
         self.response_evaluations = []
@@ -178,11 +188,18 @@ FOLLOW-UP QUESTION GUIDELINES:
 - When moving to next question, you can acknowledge previous answers: "Thank you for sharing about [topic]. Now let's move on to..."
 
 RESPONSE FORMAT:
-- Ask ONE clear question at a time
-- Provide brief context if needed ("Now let's talk about your technical experience...")
-- Keep questions conversational but purposeful
-- Avoid yes/no questions when possible - encourage detailed responses
-- When asking follow-ups, reference the previous response: "You mentioned X, can you elaborate on..."
+- You will be provided with a specific question in [NEXT_QUESTION] section
+- Ask this EXACT question (you may add a brief transition like "Great! Now let's discuss...")
+- For follow-ups, start with: "Let me ask a follow-up question about that..."
+- After follow-ups or good responses, say: "Thank you for that answer. Let's move to the next topic."
+- Keep delivery natural but ask the PROVIDED question, not your own
+- When you see [NO MORE QUESTIONS], conduct interview closing
+
+CRITICAL QUESTION DELIVERY:
+- The interview plan contains specific questions that MUST be asked
+- Each question has evaluation criteria that need to be assessed
+- Do NOT generate your own questions unless it's a follow-up
+- Follow the question sequence provided in the plan
 
 DECISION MAKING:
 - Move to next question if response quality is excellent (detailed, relevant, with examples)
@@ -241,9 +258,22 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             )
             
             # Update question tracking
+            # if response.success:
+            #     self._track_question_asked(response.content)
+            #     self.logger.info(f"Interview turn completed - Phase: {self.interview_state.current_phase.value}")
+
+            # Update question tracking
             if response.success:
                 self._track_question_asked(response.content)
                 self.logger.info(f"Interview turn completed - Phase: {self.interview_state.current_phase.value}")
+                
+                # Check for interview completion signals
+                if self._check_interview_completion(candidate_response, response.content):
+                    self.logger.info("Interview completion detected")
+                    self.interview_state.should_continue = False
+                    asyncio.create_task(self._trigger_interview_completion())
+            
+            return response
             
             return response
             
@@ -271,6 +301,36 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         # Get current section information
         current_section = self._get_current_section()
         
+        # Get the specific next question to ask
+        next_question_text = "[NO MORE QUESTIONS - Please wrap up the interview]"
+        current_question_info = {}
+        
+        if current_section and self.current_question_index < len(current_section.questions):
+            # We have a valid question to ask
+            self.current_plan_question = current_section.questions[self.current_question_index]
+            next_question_text = self.current_plan_question.question_text
+            current_question_info = {
+                "question_number": self.current_question_index + 1,
+                "total_in_section": len(current_section.questions),
+                "question_type": self.current_plan_question.question_type.value,
+                "difficulty": self.current_plan_question.difficulty_level,
+                "skill_focus": self.current_plan_question.skill_focus,
+                "evaluation_criteria": self.current_plan_question.evaluation_criteria
+            }
+            
+            # Log the question being asked
+            self.logger.info(f"Preparing question {self.plan_questions_asked_count + 1}/{self.total_plan_questions}: {next_question_text[:50]}...")  
+
+
+
+
+
+
+
+
+
+
+        
         # Build comprehensive interview context
         interview_context = {
             "interview_plan": self.interview_plan,
@@ -281,6 +341,8 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                 "objectives": current_section.objectives if current_section else [],
                 "key_evaluation_points": current_section.key_evaluation_points if current_section else []
             },
+            "NEXT_QUESTION": next_question_text,  # CRITICAL: The exact question to ask
+            "current_question_info": current_question_info,  # Metadata about the question
             "response_history": [
                 {
                     "question_asked": q,
@@ -292,8 +354,11 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                 "current_section_index": self.current_section_index,
                 "total_sections": len(self.interview_plan.interview_sections),
                 "questions_asked_count": len(self.questions_asked),
+                "plan_questions_asked": self.plan_questions_asked_count,
+                "total_plan_questions": self.total_plan_questions,
                 "time_remaining": self.interview_state.time_remaining_minutes,
-                "performance_trend": self.performance_trend
+                "performance_trend": self.performance_trend,
+                "section_progress": f"Question {self.current_question_index + 1} of {len(current_section.questions) if current_section else 0}"
             },
             # "followup_context": {
             #     "current_followup_count": self.interview_state.current_question_followup_count,
@@ -555,6 +620,12 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     def _advance_to_next_question(self):
         """Advance to the next question and reset follow-up tracking."""
         
+        # Mark current question as asked (if it exists)
+        if self.current_plan_question:
+            self.specific_questions_asked.append(self.current_plan_question.question_text)
+            self.plan_questions_asked_count += 1
+            self.logger.info(f"Completed question {self.plan_questions_asked_count}/{self.total_plan_questions}")
+        
         # Reset follow-up tracking for new question
         self.interview_state.current_question_followup_count = 0
         self.interview_state.current_question_start_time = None
@@ -566,9 +637,10 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         # Check if should move to next section
         current_section = self._get_current_section()
         if current_section and self.current_question_index >= len(current_section.questions):
+            self.logger.info(f"Completed section {self.current_section_index}: {current_section.section_name}")
             self._advance_to_next_section()
-        
-        self.logger.info(f"Advanced to question {self.current_question_index} in section {self.current_section_index}")
+        else:
+            self.logger.info(f"Advanced to question {self.current_question_index + 1} in section {self.current_section_index}")
     
     def _update_time_tracking(self):
         """Update time tracking for the interview."""
@@ -652,6 +724,49 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         
         section_progress = (self.current_section_index / len(self.interview_plan.interview_sections)) * 100
         return min(100.0, section_progress)
+    
+
+    def _check_interview_completion(self, candidate_response: str, agent_response: str) -> bool:
+        """Check if the interview should be completed."""
+        
+        # Check for farewell keywords in candidate response
+        farewell_keywords = ['goodbye', 'bye', 'thank you for your time', 'end the interview', 
+                            'خداحافظ', 'متشکرم', 'thanks for the interview']
+        candidate_lower = candidate_response.lower()
+        
+        for keyword in farewell_keywords:
+            if keyword in candidate_lower:
+                self.logger.info(f"Farewell keyword detected: {keyword}")
+                return True
+        
+        # Check if we've completed all sections
+        if self.current_section_index >= len(self.interview_plan.interview_sections):
+            self.logger.info("All interview sections completed")
+            return True
+        
+        # Check if we've asked all planned questions
+        if self.plan_questions_asked_count >= self.total_plan_questions:
+            self.logger.info("All planned questions asked")
+            return True
+        
+        # Check for timeout
+        if self.interview_state.time_remaining_minutes <= 0:
+            self.logger.info("Interview time limit reached")
+            return True
+            
+        return False
+    
+    async def _trigger_interview_completion(self):
+        """Trigger interview completion and generate summary."""
+        try:
+            await asyncio.sleep(2)  # Give time for final response
+            summary = self.generate_interview_summary()
+            self.logger.info("Interview completed successfully")
+            self.logger.info(f"Questions asked: {self.plan_questions_asked_count}/{self.total_plan_questions}")
+            self.logger.info(f"Sections completed: {self.current_section_index}/{len(self.interview_plan.interview_sections)}")
+        except Exception as e:
+            self.logger.error(f"Error triggering completion: {e}")
+
     
     def generate_interview_summary(self) -> Dict[str, Any]:
         """Generate comprehensive interview summary."""
