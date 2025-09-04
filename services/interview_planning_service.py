@@ -50,13 +50,22 @@ class InterviewPlanningConfig:
     TEMPERATURE = 0.4  # Balanced creativity for question generation
     
     # Interview structure settings
-    DEFAULT_INTERVIEW_DURATION = 60  # minutes
-    OPENING_DURATION = 5    # minutes
-    TECHNICAL_DURATION = 20  # minutes  
-    EXPERIENCE_DURATION = 15 # minutes
-    BEHAVIORAL_DURATION = 15 # minutes
-    CLOSING_DURATION = 5    # minutes
+    # DEFAULT_INTERVIEW_DURATION = 60  # minutes
+    # OPENING_DURATION = 5    # minutes
+    # TECHNICAL_DURATION = 20  # minutes  
+    # EXPERIENCE_DURATION = 15 # minutes
+    # BEHAVIORAL_DURATION = 15 # minutes
+    # CLOSING_DURATION = 5    # minutes
     
+   # set it to 30 minutes in total
+    DEFAULT_INTERVIEW_DURATION = 30  # minutes
+    OPENING_DURATION = 3    # minutes
+    TECHNICAL_DURATION = 8  # minutes  
+    EXPERIENCE_DURATION = 8 # minutes
+    BEHAVIORAL_DURATION = 8 # minutes
+    CLOSING_DURATION = 3    # minutes
+
+
     # Question generation settings
     QUESTIONS_PER_SECTION = 5
     BACKUP_QUESTIONS_PER_SECTION = 3

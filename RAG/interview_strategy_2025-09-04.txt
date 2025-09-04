@@ -1,0 +1,45 @@
+{
+  "objectives": [
+    "Assess the candidate's technical proficiency in embedded systems and related technologies",
+    "Evaluate the candidate's problem-solving and debugging skills in complex embedded systems",
+    "Determine the candidate's ability to adapt to new tools and technologies, particularly Visual C++ and Windows CE",
+    "Understand the candidate's experience with team collaboration tools like Git and Jira",
+    "Gauge the candidate's potential fit within the team and company culture"
+  ],
+  "focus_areas": [
+    "Deep dive into the candidate's experience with embedded C and C++ in real-world applications",
+    "Explore the candidate's familiarity with FreeRTOS and its implementation in projects",
+    "Discuss the candidate's experience with STM32 and ESP32 microcontrollers",
+    "Investigate the candidate's approach to PCB design and integration with software",
+    "Assess the candidate's experience with debugging tools and methodologies"
+  ],
+  "evaluation_priorities": [
+    "Technical skills related to embedded systems and debugging capabilities",
+    "Experience with required tools and technologies, especially Visual C++ and Windows CE",
+    "Ability to work collaboratively in a team setting using Git and Jira",
+    "Demonstrated problem-solving skills and ability to optimize performance in embedded systems"
+  ],
+  "red_flags": [
+    "Inconsistent explanations of past projects or technologies used",
+    "Lack of familiarity with Visual C++ or Windows CE despite extensive experience",
+    "Difficulty in articulating debugging strategies or experiences",
+    "Limited experience in team environments or collaboration tools"
+  ],
+  "clarifications": [
+    "Clarify the candidate's specific experiences with Visual C++ and how they relate to embedded systems",
+    "Explore any gaps in experience with Windows CE and how the candidate plans to bridge those gaps",
+    "Discuss any past experiences with project management tools like Jira and how they were utilized",
+    "Inquire about the candidate's approach to learning new technologies and adapting to different environments"
+  ],
+  "interviewer_notes": [
+    "Take note of the candidate's communication style and clarity in explaining technical concepts",
+    "Assess the candidate's enthusiasm for embedded systems and willingness to learn new technologies",
+    "Evaluate the candidate's ability to provide examples from past experiences that demonstrate their skills"
+  ],
+  "follow_up_areas": [
+    "Schedule a technical assessment to evaluate proficiency in Visual C++ and Windows CE",
+    "Consider a team interview to assess cultural fit and collaboration skills",
+    "Plan for a discussion on specific projects that highlight the candidate's problem-solving abilities"
+  ],
+  "strategy_type": "comprehensive"
+}

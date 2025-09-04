@@ -13,129 +13,149 @@
     {
       "skill_name": "Embedded C",
       "category": "Programming Languages",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 3,
+      "mentioned_count": 5,
       "context_mentions": [
-        "Developed and optimized embedded software in C",
-        "Proficient in programming STM32 microcontrollers",
-        "Developed firmware to read and write sensor data"
+        "developing robust firmware solutions",
+        "programming STM32 microcontrollers",
+        "developed and optimized embedded software",
+        "programmed and configured microcontrollers",
+        "developed firmware to read and write sensor data"
       ]
     },
     {
       "skill_name": "C++",
       "category": "Programming Languages",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 3,
+      "mentioned_count": 4,
       "context_mentions": [
-        "Developed and optimized embedded software in C++",
-        "Created modular, maintainable code structures",
-        "Proficient in programming STM32 microcontrollers"
+        "developing robust firmware solutions",
+        "developed and optimized embedded software",
+        "programmed and configured microcontrollers",
+        "developed firmware to read and write sensor data"
       ]
     },
     {
       "skill_name": "FreeRTOS",
       "category": "Frameworks",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 4,
+      "mentioned_count": 6,
       "context_mentions": [
-        "Used FreeRTOS to manage concurrent data collection tasks",
-        "Implemented multitasking applications using FreeRTOS",
-        "Proficient in FreeRTOS for real-time applications"
+        "utilizing FreeRTOS for multitasking",
+        "used FreeRTOS to manage concurrent data collection tasks",
+        "implemented real-time applications",
+        "designed multitasking applications",
+        "programmed the ESP32 to connect with MQTT servers",
+        "developed firmware for real-time data logging"
       ]
     },
     {
       "skill_name": "STM32",
       "category": "Microcontrollers",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 5,
+      "mentioned_count": 8,
       "context_mentions": [
-        "Programmed and configured STM32 microcontrollers",
-        "Developed firmware for STM32 microcontrollers",
-        "Successfully programmed the BMI323 accelerometer using STM32"
+        "programmed STM32 microcontrollers",
+        "configured STM32 timers",
+        "designed and implemented 4-layer and 6-layer PCBs",
+        "configured I2C communication",
+        "developed firmware for sensor data acquisition",
+        "utilized STM32\u2019s ADC functionality",
+        "implemented GPIO input configuration",
+        "designed an efficient battery monitoring system"
       ]
     },
     {
       "skill_name": "ESP32",
       "category": "Microcontrollers",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
       "mentioned_count": 5,
       "context_mentions": [
-        "Programmed and configured ESP32 microcontrollers",
-        "Controlled ESP32 using AT commands",
-        "Programmed ESP32 to connect with MQTT servers"
+        "programmed ESP32 microcontrollers",
+        "controlled ESP32 with STM32 using AT commands",
+        "programmed the ESP32 to connect to an MQTT server",
+        "configured ESP32 for Wi-Fi and Bluetooth capabilities",
+        "managed data transmission and connection stability"
       ]
     },
     {
-      "skill_name": "Altium Designer",
+      "skill_name": "PCB Design",
+      "category": "Tools",
+      "proficiency_level": "expert",
+      "years_experience": 6,
+      "mentioned_count": 6,
+      "context_mentions": [
+        "designed and developed PCBs",
+        "generated complete manufacturing documentation",
+        "designed complex PCBs",
+        "designed and developed custom 3D printed parts",
+        "designed intricate PCB layouts",
+        "created layouts that balance performance and manufacturability"
+      ]
+    },
+    {
+      "skill_name": "Git",
       "category": "Tools",
       "proficiency_level": "advanced",
       "years_experience": 6,
-      "mentioned_count": 4,
-      "context_mentions": [
-        "Designed and developed PCBs using Altium Designer",
-        "Generated intricate PCB layouts using Altium Designer",
-        "Designed and developed custom 3D printed parts using CAD software"
-      ]
-    },
-    {
-      "skill_name": "I2C",
-      "category": "Communication Protocols",
-      "proficiency_level": "advanced",
-      "years_experience": 6,
       "mentioned_count": 3,
       "context_mentions": [
-        "Configured I2C communication on STM32 microcontrollers",
-        "Optimized I2C settings for stable data polling",
-        "Successfully integrated I2C for environmental data acquisition"
-      ]
-    },
-    {
-      "skill_name": "SPI",
-      "category": "Communication Protocols",
-      "proficiency_level": "advanced",
-      "years_experience": 6,
-      "mentioned_count": 3,
-      "context_mentions": [
-        "Implemented SPI communication on STM32 microcontroller",
-        "Configured SPI for efficient data storage operations",
-        "Successfully integrated SPI for data logging"
+        "using GitHub for version control",
+        "managing repositories and handling pull requests",
+        "implementing version control best practices"
       ]
     },
     {
       "skill_name": "UART",
       "category": "Communication Protocols",
-      "proficiency_level": "advanced",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 3,
+      "mentioned_count": 4,
       "context_mentions": [
-        "Configured UART communication on STM32 microcontrollers",
-        "Managed UART communication protocol in DMA mode",
-        "Implemented GPIO input configuration for user button"
+        "configured UART communication",
+        "implemented UART communication on STM32",
+        "utilizing UART for communication",
+        "managed data flow using UART"
       ]
     },
     {
-      "skill_name": "Git",
-      "category": "Version Control",
-      "proficiency_level": "advanced",
+      "skill_name": "I2C",
+      "category": "Communication Protocols",
+      "proficiency_level": "expert",
       "years_experience": 6,
-      "mentioned_count": 2,
+      "mentioned_count": 4,
       "context_mentions": [
-        "Extensive experience using GitHub for version control",
-        "Proficient in using Git for command-line operations"
+        "configured I2C communication",
+        "implemented I2C on STM32",
+        "optimized I2C settings for stable data polling",
+        "managed I2C communication for sensors"
+      ]
+    },
+    {
+      "skill_name": "SPI",
+      "category": "Communication Protocols",
+      "proficiency_level": "expert",
+      "years_experience": 6,
+      "mentioned_count": 4,
+      "context_mentions": [
+        "configured SPI communication",
+        "implemented SPI on STM32",
+        "optimized SPI clock speed",
+        "managed data flow using SPI"
       ]
     }
   ],
   "soft_skills": [
-    "Detail-oriented",
-    "Goal-focused",
-    "Team collaboration",
-    "Problem-solving",
-    "Communication"
+    "detail-oriented",
+    "goal-focused",
+    "team player",
+    "problem-solving",
+    "communication"
   ],
   "work_experience": [
     {
@@ -146,15 +166,16 @@
       "end_date": null,
       "is_current": true,
       "key_responsibilities": [
-        "Developed and optimized embedded software in C and C++",
+        "Developed and optimized embedded software in C and C++ for a range of microcontroller applications",
         "Programmed and configured microcontrollers such as STM32 and ESP32",
         "Designed and developed PCBs from schematic to layout",
-        "Developed and executed detailed testing protocols for hardware and software components"
+        "Developed and executed detailed testing protocols for both hardware and software components"
       ],
       "achievements": [
         "Successfully designed and implemented a data acquisition system on a single microcontroller",
-        "Successfully programmed the BMI323 accelerometer and gyroscope sensor",
-        "Successfully controlled an ESP32 microcontroller with an STM32 using AT commands"
+        "Successfully programmed the BMI323 accelerometer and gyroscope sensor using the I2C interface",
+        "Successfully controlled an ESP32 microcontroller with an STM32 using AT commands",
+        "Successfully developed a complete API firmware for seamless communication between the device and an MQTT server"
       ],
       "technologies_used": [
         "Embedded C",
@@ -183,7 +204,8 @@
       "achievements": [
         "Successfully implemented a network of IoT devices containing up to 50 devices",
         "Designed a 100% noise free PCB for smart home products",
-        "Elevated the battery's energy efficiency by 60%"
+        "Elevated the battery's energy efficiency by 60%",
+        "Improved the antenna matching circuit for the 868MHz Z-wave antenna"
       ],
       "technologies_used": [
         "Embedded C",
@@ -215,7 +237,6 @@
       "technologies_used": [
         "AutoCAD Electrical",
         "KNX",
-        "S-BUS",
         "Z-wave",
         "ZigBee"
       ],
@@ -225,7 +246,7 @@
   ],
   "education": [
     {
-      "degree": "M. Sc.",
+      "degree": "M.Sc.",
       "major": "Electrical Engineering",
       "institution": "Islamic Azad University of Tehran",
       "graduation_year": 2013,
@@ -234,7 +255,7 @@
       "honors": []
     },
     {
-      "degree": "B. Sc.",
+      "degree": "B.Sc.",
       "major": "Electrical Engineering",
       "institution": "Islamic Azad University of Saveh",
       "graduation_year": 2010,
@@ -246,27 +267,28 @@
   "certifications": [],
   "career_progression": {
     "total_experience_years": 10.0,
-    "career_trajectory": "mixed",
-    "job_changes_frequency": 2.0,
+    "career_trajectory": "ascending",
+    "job_changes_frequency": 3.0,
     "industry_consistency": true,
     "role_progression": [
       "Automation System Integrator",
+      "Firmware and Hardware Engineer",
       "Firmware and Hardware Engineer"
     ],
     "career_gaps": []
   },
   "strengths": [
-    "Extensive expertise in embedded systems",
-    "Strong foundation in debugging and peripheral integration",
-    "Ability to develop and troubleshoot complex embedded systems"
+    "extensive expertise in embedded systems",
+    "strong foundation in debugging",
+    "able to develop and troubleshoot complex embedded systems",
+    "proficient in configuring peripherals and optimizing low-power performance"
   ],
   "potential_gaps": [],
   "unique_selling_points": [
-    "Proficient in multiple programming styles",
-    "Expert in PCB design and routing techniques",
-    "Experienced in managing IoT device networks"
+    "combination of skills in firmware development and PCB design",
+    "experience in real-time applications and IoT systems"
   ],
   "red_flags": [],
-  "analysis_timestamp": "2025-09-02T18:34:37.679743",
+  "analysis_timestamp": "2025-09-04T10:36:03.107282",
   "confidence_score": 0.9
 }

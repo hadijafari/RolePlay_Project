@@ -144,10 +144,6 @@ class EnhancedInterviewPlatform:
     def _initialize_enhanced_services(self):
         """Initialize enhanced AI services for document analysis and interview planning."""
 
-
-        # print("\n" + "=" * 80)
-        # print("I AM HERE START START START START START START START START START START START START START START START START START")
-        
         print(f"main.py: Class EnhancedInterviewPlatform._initialize_enhanced_services called: Initialize enhanced AI services for document analysis and interview planning.")
         try:
             # Initialize document intelligence agent
@@ -179,9 +175,6 @@ class EnhancedInterviewPlatform:
             self.context_service = None
         
 
-        # print("\n" + "=" * 80)
-        # print("I AM HERE END END END END END END END END END END END END END END END END END END END END END END END END END END END END END END END")
-        # Interview conductor will be initialized after interview plan is created
         self.interview_conductor = None
     
     def display_welcome(self):
@@ -213,18 +206,6 @@ class EnhancedInterviewPlatform:
         
         print("-" * 80)
     
-    # Command input handling removed - now using automatic setup
-    
-    def _show_help(self):
-        """Show enhanced help information."""
-        
-        print("\n📋 ENHANCED AI INTERVIEW PLATFORM - HELP")
-        print("=" * 60)
-        print()
-        print("🎤 AUDIO CONTROLS:")
-        print("  TAB (hold)       - Record audio response")
-        print("  TAB (release)    - Stop recording and process")
-        print("  Ctrl+C           - Exit application")
     
     def setup_keyboard_handlers(self):
         """Set up keyboard event handlers."""

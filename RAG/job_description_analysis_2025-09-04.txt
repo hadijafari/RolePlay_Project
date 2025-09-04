@@ -3,12 +3,12 @@
   "job_title": "Embedded Software Engineer",
   "company_info": {
     "company_name": "unknown",
-    "industry": "medical devices",
+    "industry": "high technology",
     "company_size": "unknown",
     "culture_keywords": [
       "passion",
-      "teamwork",
-      "innovation"
+      "talented",
+      "teamwork"
     ],
     "benefits_offered": []
   },
@@ -46,19 +46,13 @@
     {
       "requirement": "Firmware and low-level embedded development",
       "category": "technical",
-      "priority": "nice_to_have",
+      "priority": "preferred",
       "years_required": null
     }
   ],
   "soft_skill_requirements": [
     {
-      "requirement": "Willingness to make a difference",
-      "category": "soft_skill",
-      "priority": "required",
-      "years_required": null
-    },
-    {
-      "requirement": "Ability to work in a small team",
+      "requirement": "willingness to make a difference",
       "category": "soft_skill",
       "priority": "required",
       "years_required": null
@@ -72,7 +66,7 @@
       "years_required": 2
     },
     {
-      "requirement": "Regulated industry experience such as medical devices, military, aerospace, mining",
+      "requirement": "regulated industry experience such as medical devices, military, aerospace, mining",
       "category": "experience",
       "priority": "preferred",
       "years_required": null
@@ -99,6 +93,6 @@
   "role_type": "individual_contributor",
   "critical_success_factors": [],
   "potential_challenges": [],
-  "analysis_timestamp": "2025-09-02T18:35:14.937746",
+  "analysis_timestamp": "2025-09-04T10:36:31.325324",
   "confidence_score": 0.85
 }

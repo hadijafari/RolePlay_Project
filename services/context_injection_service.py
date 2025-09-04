@@ -262,7 +262,7 @@ class ContextInjectionService:
     
     def _generate_interview_instructions(self, context: Dict[str, Any]) -> str:
         """Generate specific system instructions for interview agents."""
-        
+        print("context_injection_service._generate_interview_instructions is called")
         instructions = [
             "You are an AI Interview Conductor. Your role is to conduct professional interviews based on the provided interview plan.",
             "",
@@ -302,12 +302,13 @@ class ContextInjectionService:
             "",
             "Respond with your next question or comment based on the current context."
         ])
-        
+
+        print(f"Here is the system prompt interview instructions: {instructions}")
         return "\n".join(instructions)
     
     def _generate_document_analysis_instructions(self, context: Dict[str, Any]) -> str:
         """Generate system instructions for document analysis agents."""
-        
+        print("context_injection_service._generate_document_analysis_instructions is called")
         instructions = [
             "You are a Document Analysis AI. Your role is to extract and analyze information from resumes and job descriptions.",
             "",
@@ -335,7 +336,7 @@ class ContextInjectionService:
     
     def _generate_evaluation_instructions(self, context: Dict[str, Any]) -> str:
         """Generate system instructions for evaluation agents."""
-        
+        print("context_injection_service._generate_evaluation_instructions is called")
         return """You are an Interview Evaluation AI. Your role is to assess candidate responses and provide feedback.
 
 EVALUATION CRITERIA:
@@ -365,6 +366,7 @@ Provide constructive feedback and scoring based on the response context."""
         
         This method ensures proper context injection into the agent's conversation.
         """
+        print("context_injection_service.convert_to_agent_messages is called")
         messages = []
         
         # Add system message with instructions
@@ -388,11 +390,13 @@ Provide constructive feedback and scoring based on the response context."""
             "content": structured_context["user_input"]
         })
         
+
+        print(f"Here is the messages for the user prompt for this section: {messages}")
         return messages
     
     def _create_interview_context_summary(self, context: Dict[str, Any]) -> str:
         """Create a concise summary of interview context for the agent."""
-        
+        print("context_injection_service._create_interview_context_summary is called")
         summary_parts = []
         
         # Interview plan summary
@@ -413,7 +417,7 @@ Provide constructive feedback and scoring based on the response context."""
     
     def validate_context_structure(self, context: Dict[str, Any]) -> ProcessingResult:
         """Validate that the context structure is properly formatted."""
-        
+        print("context_injection_service.validate_context_structure is called")
         try:
             required_fields = ["context_type", "user_input", "timestamp"]
             missing_fields = [field for field in required_fields if field not in context]
@@ -447,7 +451,7 @@ Provide constructive feedback and scoring based on the response context."""
     
     def get_context_statistics(self) -> Dict[str, Any]:
         """Get statistics about context creation operations."""
-        
+        print("context_injection_service.get_context_statistics is called")
         # This would be enhanced with actual statistics tracking
         return {
             "service_status": "active",
@@ -461,7 +465,7 @@ def create_interview_context(interview_plan: InterviewPlan,
                            interview_state: Optional[InterviewState] = None,
                            user_input: str = "") -> Dict[str, Any]:
     """Convenience function to create interview context."""
-    
+    print("create_interview_context is called")
     service = ContextInjectionService()
     context_data = {
         "interview_plan": interview_plan
@@ -476,7 +480,7 @@ def create_interview_context(interview_plan: InterviewPlan,
 def create_document_analysis_context(document_analysis: Dict[str, Any],
                                    user_input: str = "") -> Dict[str, Any]:
     """Convenience function to create document analysis context."""
-    
+    print("create_document_analysis_context is called")
     service = ContextInjectionService()
     return service.create_structured_context(user_input, {"document_analysis": document_analysis}, "document")
 

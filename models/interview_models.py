@@ -325,6 +325,12 @@ class InterviewState(BaseModel):
     questions_asked: List[str] = Field(default_factory=list)
     responses_received: List[ResponseEvaluation] = Field(default_factory=list)
     
+    # Follow-up question tracking
+    current_question_followup_count: int = 0
+    current_question_start_time: Optional[datetime] = None
+    total_followups_asked: int = 0
+    current_question_response_quality: float = 0.0  # 0-1 scale
+    
     # Interview flow control
     should_continue: bool = True
     early_termination_reason: Optional[str] = None
@@ -407,5 +413,58 @@ __all__ = [
     'InterviewContext', 'DocumentAnalysisContext',
     
     # Utility Models
-    'ProcessingResult'
+    'ProcessingResult',
+    
+    # Configuration Models
+    'FollowUpConfig'
 ]
+
+
+# ===== FOLLOW-UP CONFIGURATION =====
+
+class FollowUpConfig(BaseModel):
+    """Configuration for follow-up question management."""
+    
+    # Follow-up limits
+    max_followups_per_question: int = 2  # Maximum follow-ups per original question
+    max_followups_per_section: int = 8   # Maximum follow-ups per interview section
+    max_time_per_question_minutes: float = 8.0  # Maximum time to spend on one question
+    
+    # Response quality thresholds (0-1 scale)
+    minimum_response_quality: float = 0.6  # Minimum quality to move to next question
+    excellent_response_threshold: float = 0.8  # Skip follow-ups if response is excellent
+    
+    # Time management
+    followup_time_limit_minutes: float = 3.0  # Maximum time for follow-up responses
+    section_time_buffer_minutes: float = 5.0  # Buffer time to ensure section completion
+    
+    # Evaluation criteria weights
+    completeness_weight: float = 0.4  # How complete is the response?
+    relevance_weight: float = 0.3     # How relevant to the question?
+    depth_weight: float = 0.2         # How detailed/insightful?
+    clarity_weight: float = 0.1       # How clear is communication?
+    
+    # Question type specific settings
+    technical_question_followup_limit: int = 3  # Technical questions may need more follow-ups
+    behavioral_question_followup_limit: int = 2 # Behavioral questions need fewer follow-ups
+    
+    @validator('completeness_weight', 'relevance_weight', 'depth_weight', 'clarity_weight')
+    def validate_weights(cls, v):
+        if not 0 <= v <= 1:
+            raise ValueError('Weight must be between 0 and 1')
+        return v
+    
+    @validator('minimum_response_quality', 'excellent_response_threshold')
+    def validate_quality_thresholds(cls, v):
+        if not 0 <= v <= 1:
+            raise ValueError('Quality threshold must be between 0 and 1')
+        return v
+    
+    def get_followup_limit_for_question_type(self, question_type: str) -> int:
+        """Get follow-up limit based on question type."""
+        if question_type.lower() in ['technical', 'coding', 'system_design']:
+            return self.technical_question_followup_limit
+        elif question_type.lower() in ['behavioral', 'situational']:
+            return self.behavioral_question_followup_limit
+        else:
+            return self.max_followups_per_question
