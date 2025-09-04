@@ -111,7 +111,7 @@ class InterviewConductorAgent(BaseAgent):
     
     def _generate_interview_instructions(self, interview_plan: InterviewPlan) -> str:
         """Generate specialized system instructions for interview conducting."""
-        print("InterviewConductorAgent._generate_interview_instructions is called")
+        # print("InterviewConductorAgent._generate_interview_instructions is called")
         focus_areas = interview_plan.key_focus_areas
         evaluation_priorities = interview_plan.evaluation_priorities
         
@@ -233,7 +233,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         Returns:
             AgentResponse with next question or comment
         """
-        print("InterviewConductorAgent.conduct_interview_turn is called")
+        # print("InterviewConductorAgent.conduct_interview_turn is called")
         try:
             # Update interview state
             self._update_interview_state(candidate_response)
@@ -297,7 +297,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         This is the CRITICAL FIX - instead of flattening to text, we provide
         structured context that the enhanced base agent can properly handle.
         """
-        print("InterviewConductorAgent._prepare_interview_context is called")
+        # print("InterviewConductorAgent._prepare_interview_context is called")
         # Get current section information
         current_section = self._get_current_section()
         
@@ -321,7 +321,10 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             # Log the question being asked
             self.logger.info(f"Preparing question {self.plan_questions_asked_count + 1}/{self.total_plan_questions}: {next_question_text[:50]}...")  
 
-
+            # Debug logging to ensure question is set
+            self.logger.debug(f"Next question prepared: {next_question_text[:100]}...")
+            self.logger.info(f"Section: {current_section.section_name if current_section else 'None'}, "
+                           f"Question {self.current_question_index + 1}/{len(current_section.questions) if current_section else 0}")
 
 
 
@@ -341,7 +344,8 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                 "objectives": current_section.objectives if current_section else [],
                 "key_evaluation_points": current_section.key_evaluation_points if current_section else []
             },
-            "NEXT_QUESTION": next_question_text,  # CRITICAL: The exact question to ask
+            # CRITICAL FIX: Ensure NEXT_QUESTION is properly set
+            "NEXT_QUESTION": str(next_question_text),  # Convert to string to ensure it's passed
             "current_question_info": current_question_info,  # Metadata about the question
             "response_history": [
                 {
@@ -456,7 +460,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _update_interview_state(self, candidate_response: str):
         """Enhanced interview state update with follow-up decision logic."""
-        print("InterviewConductorAgent._update_interview_state is called")
+        # print("InterviewConductorAgent._update_interview_state is called")
         
         # Evaluate response quality using enhanced evaluation
         response_quality = self._evaluate_response_quality(candidate_response)
@@ -681,13 +685,13 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _track_question_asked(self, question: str):
         """Track questions asked during interview."""
-        print("InterviewConductorAgent._track_question_asked is called")
+        # print("InterviewConductorAgent._track_question_asked is called")
         self.questions_asked.append(question)
         self.interview_state.questions_asked.append(question)
     
     def get_interview_progress(self) -> Dict[str, Any]:
         """Get current interview progress and state."""
-        print("InterviewConductorAgent.get_interview_progress is called. Here are the ")
+        # print("InterviewConductorAgent.get_interview_progress is called. Here are the ")
         current_section = self._get_current_section()
         
         return {
@@ -718,7 +722,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _calculate_completion_percentage(self) -> float:
         """Calculate interview completion percentage."""
-        print("InterviewConductorAgent._calculate_completion_percentage is called")
+        # print("InterviewConductorAgent._calculate_completion_percentage is called")
         if not self.interview_plan.interview_sections:
             return 100.0
         
@@ -727,18 +731,42 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
 
     def _check_interview_completion(self, candidate_response: str, agent_response: str) -> bool:
-        """Check if the interview should be completed."""
+        """Check if the interview should be completed with flexible detection."""
         
-        # Check for farewell keywords in candidate response
-        farewell_keywords = ['goodbye', 'bye', 'thank you for your time', 'end the interview', 
-                            'خداحافظ', 'متشکرم', 'thanks for the interview']
         candidate_lower = candidate_response.lower()
         
-        for keyword in farewell_keywords:
+        # Expanded farewell detection with partial matches
+        farewell_patterns = [
+            'goodbye', 'bye', 'thank you', 'thanks', 
+            'end the interview', 'that\'s all', 'no more questions',
+            'i\'m done', 'finished', 'complete', 'wrap up',
+            'خداحافظ', 'متشکرم', 'ممنون', 'تمام',
+            'no questions', 'nothing else', 'all good'
+        ]
+        
+        # Check for multiple farewell indicators (more flexible)
+        farewell_count = sum(1 for pattern in farewell_patterns if pattern in candidate_lower)
+        
+        # If candidate uses multiple farewell indicators, likely wants to end
+        if farewell_count >= 2:
+            self.logger.info(f"Multiple farewell indicators detected ({farewell_count})")
+            return True
+        
+        # Strong single indicators
+        strong_farewells = ['goodbye', 'bye bye', 'end the interview', 'i\'m done', 
+                           'خداحافظ', 'interview finished']
+        for keyword in strong_farewells:
             if keyword in candidate_lower:
-                self.logger.info(f"Farewell keyword detected: {keyword}")
+                self.logger.info(f"Strong farewell detected: {keyword}")
                 return True
         
+        # Check if candidate repeatedly gives very short responses (disengagement)
+        if len(self.questions_asked) > 5:
+            recent_responses = self.interview_state.responses_received[-3:]
+            if all(len(r.response_text.split()) < 5 for r in recent_responses):
+                self.logger.info("Candidate disengagement detected (multiple short responses)")
+                return True
+
         # Check if we've completed all sections
         if self.current_section_index >= len(self.interview_plan.interview_sections):
             self.logger.info("All interview sections completed")
@@ -756,6 +784,32 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             
         return False
     
+
+
+    def handle_interview_conclusion(self, reason: str = "completed"):
+        """Handle interview conclusion with proper summary and cleanup."""
+        
+        self.logger.info(f"Interview concluding - Reason: {reason}")
+        
+        # Generate a professional closing message
+        closing_messages = {
+            "completed": "Thank you so much for your time today. We've completed all the planned questions and I have a good understanding of your background and skills.",
+            "time_limit": "We've reached our time limit for today's interview. Thank you for sharing your experiences with me.",
+            "candidate_request": "I understand you need to wrap up. Thank you for the time you've given us today.",
+            "disengagement": "Thank you for your responses. I think we have covered the key areas we needed to discuss.",
+            "all_sections": "We've successfully covered all the interview sections. Thank you for your comprehensive responses."
+        }
+        
+        closing = closing_messages.get(reason, closing_messages["completed"])
+        
+        # Set interview state to completed
+        self.interview_state.should_continue = False
+        self.interview_state.early_termination_reason = reason
+        
+        return closing + " Best of luck with your job search!"
+
+
+
     async def _trigger_interview_completion(self):
         """Trigger interview completion and generate summary."""
         try:
@@ -770,7 +824,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def generate_interview_summary(self) -> Dict[str, Any]:
         """Generate comprehensive interview summary."""
-        print("InterviewConductorAgent.generate_interview_summary is called")
+        # print("InterviewConductorAgent.generate_interview_summary is called")
         return {
             "interview_metadata": {
                 "interview_id": self.interview_plan.plan_id,
@@ -804,7 +858,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _calculate_average_response_quality(self) -> float:
         """Calculate average response quality score."""
-        print("InterviewConductorAgent._calculate_average_response_quality is called")
+        # print("InterviewConductorAgent._calculate_average_response_quality is called")
         if not self.response_evaluations:
             return 0.0
         
@@ -813,7 +867,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _aggregate_strengths(self) -> List[str]:
         """Aggregate strengths identified during interview."""
-        print("InterviewConductorAgent._aggregate_strengths is called")
+        # print("InterviewConductorAgent._aggregate_strengths is called")
         strengths = []
         for eval in self.response_evaluations:
             strengths.extend(eval.strengths_demonstrated)
@@ -821,7 +875,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _aggregate_improvement_areas(self) -> List[str]:
         """Aggregate areas for improvement identified during interview."""
-        print("InterviewConductorAgent._aggregate_improvement_areas is called")
+        # print("InterviewConductorAgent._aggregate_improvement_areas is called")
         improvements = []
         for eval in self.response_evaluations:
             improvements.extend(eval.weaknesses_identified)
@@ -829,7 +883,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
     
     def _generate_overall_assessment(self) -> str:
         """Generate overall assessment based on interview performance."""
-        print("InterviewConductorAgent._generate_overall_assessment is called")
+        # print("InterviewConductorAgent._generate_overall_assessment is called")
         completion_pct = self._calculate_completion_percentage()
         avg_quality = self._calculate_average_response_quality()
         
@@ -847,7 +901,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
 def create_interview_conductor(interview_plan: InterviewPlan,
                              agent_name: str = "Interview Conductor") -> InterviewConductorAgent:
     """Create an interview conductor agent with the given interview plan."""
-    print("InterviewConductorAgent.create_interview_conductor is called")
+    # print("InterviewConductorAgent.create_interview_conductor is called")
     return InterviewConductorAgent(interview_plan, agent_name)
 
 

@@ -262,7 +262,7 @@ class ContextInjectionService:
     
     def _generate_interview_instructions(self, context: Dict[str, Any]) -> str:
         """Generate specific system instructions for interview agents."""
-        print("context_injection_service._generate_interview_instructions is called")
+        # print("context_injection_service._generate_interview_instructions is called")
         instructions = [
             "You are an AI Interview Conductor. Your role is to conduct professional interviews based on the provided interview plan.",
             "",
@@ -304,24 +304,35 @@ class ContextInjectionService:
         ])
         
         # Add the specific next question
+        # CRITICAL: Add the specific next question to instructions
         if "NEXT_QUESTION" in context:
-            instructions.append(f"[NEXT_QUESTION]: {context['NEXT_QUESTION']}")
+            next_q = context.get("NEXT_QUESTION", "")
+            instructions.extend([
+                "",
+                "CRITICAL - ASK THIS EXACT QUESTION:",
+                f"{next_q}",
+                ""
+            ])
             
-            if "current_question_info" in context and context["current_question_info"]:
+            if "[NO MORE QUESTIONS" in next_q:
+                instructions.append("The interview is complete. Thank the candidate and wrap up professionally.")
+            elif "current_question_info" in context and context["current_question_info"]:
                 info = context["current_question_info"]
                 instructions.extend([
-                    f"Question {info.get('question_number', 0)} of {info.get('total_in_section', 0)} in current section",
-                    f"Type: {info.get('question_type', 'unknown')}",
-                    f"Focus: {', '.join(info.get('skill_focus', []))}",
-                    ""
+                    f"This is question {info.get('question_number', 0)} of {info.get('total_in_section', 0)} in the {context.get('current_section', {}).get('section_name', 'current')} section.",
+                    f"After this question, there are {context.get('interview_progress', {}).get('total_plan_questions', 0) - context.get('interview_progress', {}).get('plan_questions_asked', 0)} more questions remaining.",
+                    f"Question type: {info.get('question_type', 'unknown')}",
+                    f"Evaluation focus: {', '.join(info.get('skill_focus', []))}",
+                    "",
+                    "Remember: Ask follow-ups if needed (max 2), then move to next question."
                 ])
 
-        print(f"Here is the system prompt interview instructions: {instructions}")
+        # print(f"Here is the system prompt interview instructions: {instructions}")
         return "\n".join(instructions)
     
     def _generate_document_analysis_instructions(self, context: Dict[str, Any]) -> str:
         """Generate system instructions for document analysis agents."""
-        print("context_injection_service._generate_document_analysis_instructions is called")
+        # print("context_injection_service._generate_document_analysis_instructions is called")
         instructions = [
             "You are a Document Analysis AI. Your role is to extract and analyze information from resumes and job descriptions.",
             "",
@@ -407,9 +418,17 @@ Provide constructive feedback and scoring based on the response context."""
                 if msg["role"] != "system":
                     messages.append(msg)
         
-        # Add current user input with follow-up context if available
+        # Add current user input with question context
         current_message = structured_context["user_input"]
         
+        # CRITICAL: Add the next question to user context if this is a new question
+        if structured_context.get("context_type") == "interview":
+            if "NEXT_QUESTION" in structured_context and structured_context.get("followup_context", {}).get("current_followup_count", 0) == 0:
+                # This is a new question, not a follow-up
+                next_q = structured_context.get("NEXT_QUESTION", "")
+                if next_q and "[NO MORE QUESTIONS" not in next_q:
+                    current_message = f"[INSTRUCTION: Ask this exact question: {next_q}]\n\n{current_message}"
+            
         # Add follow-up tracking info to user message
         if structured_context.get("context_type") == "interview" and "followup_context" in structured_context:
             followup_info = structured_context.get("followup_context", {})
@@ -424,7 +443,7 @@ Provide constructive feedback and scoring based on the response context."""
             "content": current_message
         })
 
-        print(f"Here is the messages for the user prompt for this section: {messages}")
+        # print(f"Here is the messages for the user prompt for this section: {messages}")
         return messages
 
 
