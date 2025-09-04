@@ -168,11 +168,14 @@ You will receive detailed context about:
 - Recommended questions and follow-up areas
 
 FOLLOW-UP QUESTION GUIDELINES:
-- You have a maximum of 2-3 follow-up questions per original question
-- Ask follow-ups when responses lack detail, examples, or clarity
-- Move to the next question when you have sufficient information
-- Consider time constraints - don't spend too long on one question
-- Follow-up examples: "Can you give me a specific example?", "What was the outcome?", "How did you handle the challenges?"
+- You have a STRICT MAXIMUM of 2 follow-up questions per original question
+- Current follow-up count will be shown as [Follow-up X/2] in the user's message
+- When you see [Follow-up 2/2], you MUST move to the next question after this response
+- Start follow-ups with: "Let me ask a follow-up question about that..."
+- Ask follow-ups ONLY when responses lack critical detail, examples, or clarity
+- Follow-up examples: "Let me ask a follow-up question about that. Can you give me a specific example?", "Let me ask a follow-up question about that. What was the outcome?"
+- If the response is adequate (even if not perfect), move to the next question
+- When moving to next question, you can acknowledge previous answers: "Thank you for sharing about [topic]. Now let's move on to..."
 
 RESPONSE FORMAT:
 - Ask ONE clear question at a time
@@ -220,6 +223,16 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             
             # Prepare structured interview context 
             interview_context = self._prepare_interview_context(candidate_response, additional_context)
+            
+            # Process with structured context (no more text flattening!)
+            # response = await self.process_request(
+            #     candidate_response, 
+            #     interview_context
+            # )
+
+            # Add explicit follow-up guidance if at limit
+            if self.interview_state.current_question_followup_count >= 2:
+                candidate_response = f"[SYSTEM NOTE: You have reached the maximum of 2 follow-ups. Please move to the next question.]\n\n{candidate_response}"
             
             # Process with structured context (no more text flattening!)
             response = await self.process_request(
@@ -282,11 +295,24 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                 "time_remaining": self.interview_state.time_remaining_minutes,
                 "performance_trend": self.performance_trend
             },
+            # "followup_context": {
+            #     "current_followup_count": self.interview_state.current_question_followup_count,
+            #     "max_followups_allowed": self.followup_config.max_followups_per_question,
+            #     "response_quality": self.interview_state.current_question_response_quality,
+            #     "should_ask_followup": self.interview_state.current_question_followup_count > 0,
+            #     "time_spent_on_question": self._get_time_spent_on_current_question(),
+            #     "followup_config": {
+            #         "min_quality_threshold": self.followup_config.minimum_response_quality,
+            #         "excellent_threshold": self.followup_config.excellent_response_threshold,
+            #         "max_time_per_question": self.followup_config.max_time_per_question_minutes
+            #     }
+            # },
             "followup_context": {
                 "current_followup_count": self.interview_state.current_question_followup_count,
-                "max_followups_allowed": self.followup_config.max_followups_per_question,
+                "max_followups_allowed": 2,  # Hardcode to 2 for clarity
                 "response_quality": self.interview_state.current_question_response_quality,
-                "should_ask_followup": self.interview_state.current_question_followup_count > 0,
+                "should_ask_followup": self._should_ask_followup(candidate_response, self.interview_state.current_question_response_quality),
+                "must_move_to_next": self.interview_state.current_question_followup_count >= 2,  # Explicit flag
                 "time_spent_on_question": self._get_time_spent_on_current_question(),
                 "followup_config": {
                     "min_quality_threshold": self.followup_config.minimum_response_quality,

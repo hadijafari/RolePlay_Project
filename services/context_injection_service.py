@@ -360,7 +360,10 @@ Provide constructive feedback and scoring based on the response context."""
             "system_instructions": "You are a helpful AI assistant. Respond based on the provided context."
         }
     
-    def convert_to_agent_messages(self, structured_context: Dict[str, Any]) -> List[Dict[str, str]]:
+
+
+    def convert_to_agent_messages(self, structured_context: Dict[str, Any], 
+                                conversation_history: Optional[List[Dict[str, str]]] = None) -> List[Dict[str, str]]:
         """
         Convert structured context to OpenAI message format for agents.
         
@@ -384,15 +387,69 @@ Provide constructive feedback and scoring based on the response context."""
                 "content": f"INTERVIEW CONTEXT:\n{context_summary}"
             })
         
-        # Add user input
+        # Add conversation history (all previous Q&As)
+        if conversation_history:
+            for msg in conversation_history:
+                # Skip system messages from history to avoid duplicates
+                if msg["role"] != "system":
+                    messages.append(msg)
+        
+        # Add current user input with follow-up context if available
+        current_message = structured_context["user_input"]
+        
+        # Add follow-up tracking info to user message
+        if structured_context.get("context_type") == "interview" and "followup_context" in structured_context:
+            followup_info = structured_context.get("followup_context", {})
+            followup_count = followup_info.get("current_followup_count", 0)
+            max_followups = followup_info.get("max_followups_allowed", 2)
+            
+            if followup_count > 0:
+                current_message = f"[Follow-up {followup_count}/{max_followups}]\n{current_message}"
+        
         messages.append({
             "role": "user",
-            "content": structured_context["user_input"]
+            "content": current_message
         })
-        
 
         print(f"Here is the messages for the user prompt for this section: {messages}")
         return messages
+
+
+
+
+    # def convert_to_agent_messages(self, structured_context: Dict[str, Any]) -> List[Dict[str, str]]:
+    #     """
+    #     Convert structured context to OpenAI message format for agents.
+        
+    #     This method ensures proper context injection into the agent's conversation.
+    #     """
+    #     print("context_injection_service.convert_to_agent_messages is called")
+    #     messages = []
+        
+    #     # Add system message with instructions
+    #     if "system_instructions" in structured_context:
+    #         messages.append({
+    #             "role": "system",
+    #             "content": structured_context["system_instructions"]
+    #         })
+        
+    #     # Add context as system message if it's interview context
+    #     if structured_context.get("context_type") == "interview":
+    #         context_summary = self._create_interview_context_summary(structured_context)
+    #         messages.append({
+    #             "role": "system", 
+    #             "content": f"INTERVIEW CONTEXT:\n{context_summary}"
+    #         })
+        
+    #     # Add user input
+    #     messages.append({
+    #         "role": "user",
+    #         "content": structured_context["user_input"]
+    #     })
+        
+
+    #     print(f"Here is the messages for the user prompt for this section: {messages}")
+    #     return messages
     
     def _create_interview_context_summary(self, context: Dict[str, Any]) -> str:
         """Create a concise summary of interview context for the agent."""

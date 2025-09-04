@@ -344,7 +344,22 @@ class BaseAgent:
             response_content = self._extract_response_content(result)
             
             # Add to conversation history with enhanced metadata
+            # self.conversation_manager.add_message("user", user_input, {
+            #     "processing_time": processing_time,
+            #     "context_creation_time": context_time,
+            #     "model": self.config.model,
+            #     "context_size": len(str(context)),
+            #     "structured_context_used": self.context_service is not None
+            # })
+            
+            # self.conversation_manager.add_message("assistant", response_content, {
+            #     "processing_time": processing_time,
+            #     "model": self.config.model
+            # })
+
+            # Add to conversation history with role in metadata for proper retrieval
             self.conversation_manager.add_message("user", user_input, {
+                "role": "user",  # Add explicit role
                 "processing_time": processing_time,
                 "context_creation_time": context_time,
                 "model": self.config.model,
@@ -353,6 +368,7 @@ class BaseAgent:
             })
             
             self.conversation_manager.add_message("assistant", response_content, {
+                "role": "assistant",  # Add explicit role
                 "processing_time": processing_time,
                 "model": self.config.model
             })
@@ -480,16 +496,59 @@ class BaseAgent:
             # Return minimal context
             return Context(f"User input: {user_input}")
     
+    # async def _run_agent_with_structured_context(self, user_input: str, context: Union[Dict[str, Any], 'Context']) -> Any:
+    #     """
+    #     ENHANCED: Run the agent with structured context handling.
+    #     """
+    #     try:
+    #         if isinstance(context, dict) and "context_type" in context:
+    #             # Handle structured context
+    #             if self.context_service:
+    #                 # Convert structured context to agent messages
+    #                 messages = self.context_service.convert_to_agent_messages(context)
+                    
+    #                 # Run agent with structured messages
+    #                 response = await asyncio.to_thread(
+    #                     self.client.chat.completions.create,
+    #                     model=self.config.model,
+    #                     messages=messages,
+    #                     max_tokens=1000,
+    #                     temperature=0.7
+    #                 )
+                    
+    #                 return response.choices[0].message.content
+    #             else:
+    #                 # Fallback if context service not available
+    #                 return await self._run_legacy_agent(user_input, context)
+    #         else:
+    #             # Handle legacy context
+    #             return await self._run_legacy_agent(user_input, context)
+                
+    #     except Exception as e:
+    #         self.logger.error(f"Agent execution error: {e}")
+    #         raise
+    
     async def _run_agent_with_structured_context(self, user_input: str, context: Union[Dict[str, Any], 'Context']) -> Any:
         """
-        ENHANCED: Run the agent with structured context handling.
+        ENHANCED: Run the agent with structured context handling and full conversation history.
         """
         try:
             if isinstance(context, dict) and "context_type" in context:
                 # Handle structured context
                 if self.context_service:
-                    # Convert structured context to agent messages
-                    messages = self.context_service.convert_to_agent_messages(context)
+                    # Get full conversation history (excluding system messages to avoid duplicates)
+                    conversation_history = []
+                    for msg in self.conversation_manager.conversations:
+                        if "content" in msg and "role" in msg["metadata"]:
+                            # Add previous user/assistant messages
+                            if msg["metadata"]["role"] in ["user", "assistant"]:
+                                conversation_history.append({
+                                    "role": msg["metadata"]["role"],
+                                    "content": msg["content"]
+                                })
+                    
+                    # Convert structured context to agent messages WITH history
+                    messages = self.context_service.convert_to_agent_messages(context, conversation_history)
                     
                     # Run agent with structured messages
                     response = await asyncio.to_thread(
@@ -500,7 +559,12 @@ class BaseAgent:
                         temperature=0.7
                     )
                     
-                    return response.choices[0].message.content
+                    response_content = response.choices[0].message.content
+                    
+                    # Store the response in conversation history with proper metadata
+                    self.conversation_manager.add_message("assistant", response_content, {"role": "assistant"})
+                    
+                    return response_content
                 else:
                     # Fallback if context service not available
                     return await self._run_legacy_agent(user_input, context)
@@ -511,7 +575,10 @@ class BaseAgent:
         except Exception as e:
             self.logger.error(f"Agent execution error: {e}")
             raise
-    
+
+
+
+
     async def _run_legacy_agent(self, user_input: str, context: Any) -> Any:
         """Original agent execution method for backwards compatibility."""
         try:

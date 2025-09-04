@@ -52,7 +52,13 @@
   ],
   "soft_skill_requirements": [
     {
-      "requirement": "willingness to make a difference",
+      "requirement": "Willingness to make a difference",
+      "category": "soft_skill",
+      "priority": "required",
+      "years_required": null
+    },
+    {
+      "requirement": "Ability to work within a small team",
       "category": "soft_skill",
       "priority": "required",
       "years_required": null
@@ -66,7 +72,7 @@
       "years_required": 2
     },
     {
-      "requirement": "regulated industry experience such as medical devices, military, aerospace, mining",
+      "requirement": "Regulated industry experience such as medical devices, military, aerospace, mining",
       "category": "experience",
       "priority": "preferred",
       "years_required": null
@@ -93,6 +99,6 @@
   "role_type": "individual_contributor",
   "critical_success_factors": [],
   "potential_challenges": [],
-  "analysis_timestamp": "2025-09-04T10:36:31.325324",
+  "analysis_timestamp": "2025-09-04T12:06:37.360427",
   "confidence_score": 0.85
 }

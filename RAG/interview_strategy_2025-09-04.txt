@@ -1,45 +1,51 @@
 {
   "objectives": [
-    "Assess the candidate's technical proficiency in embedded systems and related technologies",
-    "Evaluate the candidate's problem-solving and debugging skills in complex embedded systems",
-    "Determine the candidate's ability to adapt to new tools and technologies, particularly Visual C++ and Windows CE",
-    "Understand the candidate's experience with team collaboration tools like Git and Jira",
-    "Gauge the candidate's potential fit within the team and company culture"
+    "Assess the candidate's technical proficiency in Embedded C and C++ as it relates to the job requirements.",
+    "Evaluate the candidate's experience with RTOS, particularly FreeRTOS, and how it translates to the needs of the position.",
+    "Determine the candidate's familiarity with Visual C++ and Windows CE, identifying any gaps in knowledge.",
+    "Understand the candidate's experience with version control systems, specifically GIT, and project management tools like Jira.",
+    "Gauge the candidate's problem-solving skills and ability to debug complex embedded systems."
   ],
   "focus_areas": [
-    "Deep dive into the candidate's experience with embedded C and C++ in real-world applications",
-    "Explore the candidate's familiarity with FreeRTOS and its implementation in projects",
-    "Discuss the candidate's experience with STM32 and ESP32 microcontrollers",
-    "Investigate the candidate's approach to PCB design and integration with software",
-    "Assess the candidate's experience with debugging tools and methodologies"
+    "In-depth discussion of the candidate's experience with embedded systems and microcontroller programming.",
+    "Exploration of the candidate's debugging techniques and experiences with peripheral integration.",
+    "Assessment of the candidate's familiarity with Visual C++ and Windows CE, including any projects they have worked on.",
+    "Review of the candidate's experience with GIT and Jira, focusing on collaboration and project management.",
+    "Evaluation of the candidate's understanding of different RTOS, particularly FreeRTOS, and its application in previous projects."
   ],
   "evaluation_priorities": [
-    "Technical skills related to embedded systems and debugging capabilities",
-    "Experience with required tools and technologies, especially Visual C++ and Windows CE",
-    "Ability to work collaboratively in a team setting using Git and Jira",
-    "Demonstrated problem-solving skills and ability to optimize performance in embedded systems"
+    "Technical skills in Embedded C and C++.",
+    "Experience with RTOS and debugging skills.",
+    "Familiarity with Visual C++ and Windows CE.",
+    "Proficiency in GIT and Jira.",
+    "Ability to integrate peripherals and solve complex problems."
   ],
   "red_flags": [
-    "Inconsistent explanations of past projects or technologies used",
-    "Lack of familiarity with Visual C++ or Windows CE despite extensive experience",
-    "Difficulty in articulating debugging strategies or experiences",
-    "Limited experience in team environments or collaboration tools"
+    "Lack of experience with Visual C++ and Windows CE.",
+    "Inability to clearly explain debugging processes or experiences.",
+    "Limited knowledge of GIT and Jira, especially in a collaborative environment.",
+    "Unfamiliarity with project management methodologies.",
+    "Inconsistent work history or gaps in experience without clear explanations."
   ],
   "clarifications": [
-    "Clarify the candidate's specific experiences with Visual C++ and how they relate to embedded systems",
-    "Explore any gaps in experience with Windows CE and how the candidate plans to bridge those gaps",
-    "Discuss any past experiences with project management tools like Jira and how they were utilized",
-    "Inquire about the candidate's approach to learning new technologies and adapting to different environments"
+    "Clarify the extent of experience with Visual C++ and any relevant projects.",
+    "Explore any specific projects involving Windows CE and the candidate's role in them.",
+    "Discuss the candidate's approach to debugging and troubleshooting embedded systems.",
+    "Ask about the candidate's experience with team collaboration tools and methodologies.",
+    "Seek details on the candidate's familiarity with various RTOS beyond FreeRTOS."
   ],
   "interviewer_notes": [
-    "Take note of the candidate's communication style and clarity in explaining technical concepts",
-    "Assess the candidate's enthusiasm for embedded systems and willingness to learn new technologies",
-    "Evaluate the candidate's ability to provide examples from past experiences that demonstrate their skills"
+    "The candidate has strong technical skills in embedded systems but may need to demonstrate knowledge of Visual C++ and Windows CE.",
+    "Focus on real-world examples of problem-solving and debugging.",
+    "Assess how well the candidate can adapt their skills to meet the requirements of the position.",
+    "Take note of the candidate's communication skills and ability to articulate complex concepts."
   ],
   "follow_up_areas": [
-    "Schedule a technical assessment to evaluate proficiency in Visual C++ and Windows CE",
-    "Consider a team interview to assess cultural fit and collaboration skills",
-    "Plan for a discussion on specific projects that highlight the candidate's problem-solving abilities"
+    "If the candidate progresses, arrange a technical assessment focused on Visual C++ and Windows CE.",
+    "Consider a team-based interview to evaluate collaboration skills.",
+    "Plan a follow-up discussion on project management experiences and methodologies.",
+    "Explore opportunities for the candidate to demonstrate their debugging skills in a practical scenario.",
+    "Assess the candidate's willingness to learn and adapt to new technologies relevant to the role."
   ],
-  "strategy_type": "comprehensive"
+  "strategy_type": "interview"
 }
