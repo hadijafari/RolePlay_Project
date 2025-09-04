@@ -257,6 +257,16 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                 interview_context
             )
             
+
+
+            current_section = self._get_current_section()
+            if current_section:
+                print(f"\n🎤 INTERVIEW TURN START:")
+                print(f"   Section: {current_section.section_name}")
+                print(f"   Question Index: {self.current_question_index + 1}/{len(current_section.questions)}")
+                print(f"   Follow-ups so far: {self.interview_state.current_question_followup_count}/2")
+            else:
+                print(f"🔴 No current section found")
             # Update question tracking
             # if response.success:
             #     self._track_question_asked(response.content)
@@ -274,8 +284,7 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
                     asyncio.create_task(self._trigger_interview_completion())
             
             return response
-            
-            return response
+
             
         except Exception as e:
             self.logger.error(f"Error in interview turn: {e}")
@@ -309,6 +318,11 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             # We have a valid question to ask
             self.current_plan_question = current_section.questions[self.current_question_index]
             next_question_text = self.current_plan_question.question_text
+
+            print(f"🎯 CURRENT QUESTION: Section '{current_section.section_name}' - Question {self.current_question_index + 1}/{len(current_section.questions)}")
+            print(f"📝 Question Text: {next_question_text}")
+            print(f"🔢 Overall Progress: {self.plan_questions_asked_count + 1}/{self.total_plan_questions}")
+
             current_question_info = {
                 "question_number": self.current_question_index + 1,
                 "total_in_section": len(current_section.questions),
@@ -325,13 +339,6 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             self.logger.debug(f"Next question prepared: {next_question_text[:100]}...")
             self.logger.info(f"Section: {current_section.section_name if current_section else 'None'}, "
                            f"Question {self.current_question_index + 1}/{len(current_section.questions) if current_section else 0}")
-
-
-
-
-
-
-
 
         
         # Build comprehensive interview context
@@ -628,7 +635,8 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         if self.current_plan_question:
             self.specific_questions_asked.append(self.current_plan_question.question_text)
             self.plan_questions_asked_count += 1
-            self.logger.info(f"Completed question {self.plan_questions_asked_count}/{self.total_plan_questions}")
+            print(f"✅ COMPLETED: Question {self.plan_questions_asked_count}/{self.total_plan_questions}")
+            print(f"📋 Just finished: {self.current_plan_question.question_text[:60]}...")
         
         # Reset follow-up tracking for new question
         self.interview_state.current_question_followup_count = 0
