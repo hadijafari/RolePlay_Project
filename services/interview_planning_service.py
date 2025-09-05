@@ -49,13 +49,8 @@ class InterviewPlanningConfig:
     MAX_TOKENS = 4000
     TEMPERATURE = 0.4  # Balanced creativity for question generation
     
-    # Interview structure settings
-    DEFAULT_INTERVIEW_DURATION = 60  # minutes
-    OPENING_DURATION = 5    # minutes
-    TECHNICAL_DURATION = 20  # minutes  
-    EXPERIENCE_DURATION = 15 # minutes
-    BEHAVIORAL_DURATION = 15 # minutes
-    CLOSING_DURATION = 5    # minutes
+    # Interview structure settings (durations are informational only; no enforcement)
+    DEFAULT_INTERVIEW_DURATION = 60  # minutes (not enforced)
     
    # set it to 30 minutes in total
     # DEFAULT_INTERVIEW_DURATION = 30  # minutes
@@ -67,10 +62,17 @@ class InterviewPlanningConfig:
 
 
     # Question generation settings
-    QUESTIONS_PER_SECTION = 5
+    QUESTIONS_PER_SECTION = 5  # default fallback
     BACKUP_QUESTIONS_PER_SECTION = 3
-    MIN_QUESTION_TIME = 2   # minutes
-    MAX_QUESTION_TIME = 10  # minutes
+    # Per-section targets to reach 25 total (informational; no time limits)
+    QUESTIONS_PER_SECTION_BY_NAME = {
+        "Opening & Introduction": 3,
+        "Warm-up": 3,
+        "Core Questions / Main Body": 12,
+        "Challenging or Sensitive Topics": 3,
+        "Closing Questions": 2,
+        "Wrap-up": 2
+    }
     
     # Processing settings
     MAX_RETRY_ATTEMPTS = 3
@@ -136,21 +138,34 @@ class InterviewPlanningService:
         """Initialize question frameworks for different interview phases."""
         
         return {
-            "opening": {
+            "opening_intro": {
                 "objectives": [
-                    "Make candidate comfortable",
-                    "Understand motivation for role",
-                    "Get overview of background",
-                    "Set interview tone"
+                    "Build rapport and set expectations",
+                    "Introduce interviewer and purpose",
+                    "Obtain consent for recording if applicable",
+                    "Outline interview process and timeline"
                 ],
                 "question_types": [QuestionType.OPEN_ENDED],
                 "sample_questions": [
-                    "Tell me about yourself and what interests you about this role.",
-                    "What do you know about our company and why do you want to work here?",
-                    "Walk me through your career journey and what led you to apply for this position."
+                    "To begin, could you confirm you're comfortable proceeding with this interview?",
+                    "I'll briefly outline the flow: opening, warm-up, core topics, a few challenges, and closing. Does that work for you?",
+                    "In one or two sentences, what attracted you to this role?"
                 ]
             },
-            "technical": {
+            "warm_up": {
+                "objectives": [
+                    "Help the candidate relax",
+                    "Encourage natural conversation",
+                    "Gather high-level context"
+                ],
+                "question_types": [QuestionType.OPEN_ENDED, QuestionType.BEHAVIORAL],
+                "sample_questions": [
+                    "What recent project are you most proud of, and why?",
+                    "Which tools or environments do you feel most at home with?",
+                    "If you had to explain your core expertise to a non-technical person, how would you do it?"
+                ]
+            },
+            "core_main": {
                 "objectives": [
                     "Assess technical competency",
                     "Evaluate problem-solving skills",
@@ -164,46 +179,43 @@ class InterviewPlanningService:
                     "Walk me through your experience with [specific technology]."
                 ]
             },
-            "experience": {
+            "challenging": {
                 "objectives": [
-                    "Validate resume claims",
-                    "Understand work approach",
-                    "Assess leadership potential",
-                    "Evaluate cultural fit"
+                    "Explore constraints, trade-offs, and risks",
+                    "Discuss sensitive or difficult topics respectfully",
+                    "Understand decision-making under pressure"
                 ],
-                "question_types": [QuestionType.BEHAVIORAL, QuestionType.SITUATIONAL],
+                "question_types": [QuestionType.SITUATIONAL, QuestionType.BEHAVIORAL],
                 "sample_questions": [
-                    "Tell me about your most significant professional achievement.",
-                    "Describe a time when you had to work with a difficult team member.",
-                    "How do you handle competing priorities and tight deadlines?"
+                    "Tell me about a time you faced a difficult constraint or safety/regulatory requirement. How did it shape your solution?",
+                    "Describe a tough trade-off you made (performance vs. cost, latency vs. accuracy, etc.).",
+                    "Share an instance where something went wrong in production. How did you handle it and what changed after?"
                 ]
             },
-            "behavioral": {
+            "closing_questions": {
                 "objectives": [
-                    "Assess soft skills",
-                    "Evaluate cultural fit",
-                    "Understand work style",
-                    "Test emotional intelligence"
-                ],
-                "question_types": [QuestionType.BEHAVIORAL],
-                "sample_questions": [
-                    "Tell me about a time when you failed at something. How did you handle it?",
-                    "Describe a situation where you had to adapt to significant change.",
-                    "How do you approach giving feedback to colleagues?"
-                ]
-            },
-            "closing": {
-                "objectives": [
-                    "Answer candidate questions",
-                    "Gauge continued interest",
-                    "Explain next steps",
-                    "Leave positive impression"
+                    "Give the candidate space to add anything missing",
+                    "Clarify remaining topics",
+                    "Transition to next steps"
                 ],
                 "question_types": [QuestionType.OPEN_ENDED],
                 "sample_questions": [
-                    "What questions do you have about the role or our company?",
-                    "Is there anything we haven't covered that you'd like to discuss?",
-                    "What are your salary expectations for this position?"
+                    "Is there anything we haven't covered that you think is important?",
+                    "Are there any areas you'd like to clarify or expand on?",
+                    "What questions do you have for us about the role or team?"
+                ]
+            },
+            "wrap_up": {
+                "objectives": [
+                    "Thank the candidate and explain next steps",
+                    "Confirm contact details or follow-ups",
+                    "Close on a positive, professional note"
+                ],
+                "question_types": [QuestionType.OPEN_ENDED],
+                "sample_questions": [
+                    "Thank you for your time today. We'll review and get back to you. Does that timeline work?",
+                    "Do you have a preferred method of contact for follow-up?",
+                    "Before we wrap up, is there anything else you'd like to add?"
                 ]
             }
         }
@@ -245,7 +257,7 @@ class InterviewPlanningService:
             with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_strategy_{datetime.now().strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
                 f.write(json.dumps(interview_strategy, indent=2, default=str))
             print(f"In generate_interview_plan method of InterviewPlanningService: Interview strategy saved to file")
-            # Create interview sections
+            # Create interview sections (six-part structure; durations informational only)
             interview_sections = await self._create_interview_sections(
                 interview_strategy, resume_analysis, job_analysis, duration
             )
@@ -253,11 +265,13 @@ class InterviewPlanningService:
             with open(f"D:\\workspaces\\AI-Tutorials\\AI Agents\\MyAgentsTutorial\\agents\\2_openai\\Interview RolePlay\\interview_platform\\RAG\\interview_sections_{datetime.now().strftime('%Y-%m-%d')}.txt", "w", encoding="utf-8") as f:
                 f.write(json.dumps(interview_sections, indent=2, default=str))
             print(f"In generate_interview_plan method of InterviewPlanningService: Interview sections saved to file")
-            # Generate detailed questions for each section
+            # Generate detailed questions for each section with de-duplication across sections
+            previous_q_texts: List[str] = []
             for section in interview_sections:
                 await self._generate_section_questions(
-                    section, interview_strategy, resume_analysis, job_analysis
+                    section, interview_strategy, resume_analysis, job_analysis, previous_q_texts
                 )
+                previous_q_texts.extend([q.question_text for q in section.questions])
             
             # Create complete interview plan
             interview_plan = InterviewPlan(
@@ -441,128 +455,141 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
         # Calculate time allocations based on total duration
         time_allocations = self._calculate_time_allocations(total_duration)
         
-        # Opening section
+        # 1) Opening / Introduction
         opening_section = InterviewSection(
             phase=InterviewPhase.OPENING,
-            section_name="Opening & Background",
-            description="Initial conversation to make candidate comfortable and understand their background",
-            objectives=self.question_frameworks["opening"]["objectives"],
-            estimated_duration_minutes=time_allocations["opening"],
+            section_name="Opening & Introduction",
+            description="Introduce the interview, obtain consent if applicable, build rapport, and set expectations",
+            objectives=self.question_frameworks["opening_intro"]["objectives"],
+            estimated_duration_minutes=time_allocations["opening_intro"],
             questions=[],  # Will be populated later
             key_evaluation_points=[
-                "Communication clarity",
-                "Enthusiasm for role",
-                "Professional presentation",
-                "Cultural fit indicators"
+                "Rapport and professionalism",
+                "Clarity of communication",
+                "Motivation and alignment"
             ],
             success_criteria=[
                 "Candidate appears comfortable and engaged",
-                "Clear articulation of interest in role",
-                "Professional and positive demeanor"
+                "Consent obtained if applicable",
+                "Clear understanding of process"
             ]
         )
         sections.append(opening_section)
         
-        # Technical section
-        technical_section = InterviewSection(
+        # 2) Warm-up Questions
+        warmup_section = InterviewSection(
+            phase=InterviewPhase.OPENING,
+            section_name="Warm-up",
+            description="Easy, open-ended questions to help the candidate relax and provide context",
+            objectives=self.question_frameworks["warm_up"]["objectives"],
+            estimated_duration_minutes=time_allocations["warm_up"],
+            questions=[],
+            key_evaluation_points=[
+                "Comfort level",
+                "High-level coherence",
+                "Relevance to role"
+            ],
+            success_criteria=[
+                "Conversation flows naturally",
+                "Candidate provides concise, relevant context"
+            ]
+        )
+        sections.append(warmup_section)
+        
+        # 3) Core Questions / Main Body (technical focus)
+        core_section = InterviewSection(
             phase=InterviewPhase.TECHNICAL,
-            section_name="Technical Assessment",
-            description="Evaluate technical skills and problem-solving approach",
-            objectives=self.question_frameworks["technical"]["objectives"],
-            estimated_duration_minutes=time_allocations["technical"],
+            section_name="Core Questions / Main Body",
+            description="Primary technical and role-related assessment; progress from broad to specific",
+            objectives=self.question_frameworks["core_main"]["objectives"],
+            estimated_duration_minutes=time_allocations["core_main"],
             questions=[],
             key_evaluation_points=[
                 "Technical accuracy and depth",
                 "Problem-solving methodology",
-                "Code quality and best practices awareness",
+                "Architecture/design trade-offs",
                 "Technology stack alignment"
             ],
             success_criteria=[
                 "Demonstrates required technical competencies",
-                "Shows clear problem-solving approach",
-                "Articulates technical concepts effectively"
+                "Explains reasoning and constraints clearly",
+                "Connects experience to role requirements"
             ]
         )
-        sections.append(technical_section)
+        sections.append(core_section)
         
-        # Experience section
-        experience_section = InterviewSection(
-            phase=InterviewPhase.EXPERIENCE,
-            section_name="Professional Experience",
-            description="Deep dive into work history and achievements",
-            objectives=self.question_frameworks["experience"]["objectives"],
-            estimated_duration_minutes=time_allocations["experience"],
+        # 4) Challenging or Sensitive Topics
+        challenging_section = InterviewSection(
+            phase=InterviewPhase.SITUATIONAL,
+            section_name="Challenging or Sensitive Topics",
+            description="Explore difficult constraints, failures, and risk/impact scenarios respectfully",
+            objectives=self.question_frameworks["challenging"]["objectives"],
+            estimated_duration_minutes=time_allocations["challenging"],
             questions=[],
             key_evaluation_points=[
-                "Experience relevance to role",
-                "Achievement impact and scale",
-                "Leadership and collaboration skills",
-                "Career progression logic"
+                "Decision-making under pressure",
+                "Risk awareness and mitigation",
+                "Ownership and learning from mistakes"
             ],
             success_criteria=[
-                "Provides concrete examples of achievements",
-                "Shows progression in responsibilities",
-                "Demonstrates relevant experience depth"
+                "Gives candid, reflective answers",
+                "Shows mature judgment and accountability"
             ]
         )
-        sections.append(experience_section)
+        sections.append(challenging_section)
         
-        # Behavioral section
-        behavioral_section = InterviewSection(
-            phase=InterviewPhase.BEHAVIORAL,
-            section_name="Behavioral & Cultural Fit",
-            description="Assess soft skills, work style, and cultural alignment",
-            objectives=self.question_frameworks["behavioral"]["objectives"],
-            estimated_duration_minutes=time_allocations["behavioral"],
-            questions=[],
-            key_evaluation_points=[
-                "Cultural fit with team and company",
-                "Emotional intelligence and self-awareness",
-                "Conflict resolution and communication skills",
-                "Growth mindset and adaptability"
-            ],
-            success_criteria=[
-                "Aligns with company values and culture",
-                "Shows self-awareness and emotional maturity",
-                "Demonstrates effective communication skills"
-            ]
-        )
-        sections.append(behavioral_section)
-        
-        # Closing section
-        closing_section = InterviewSection(
+        # 5) Closing Questions
+        closing_q_section = InterviewSection(
             phase=InterviewPhase.CLOSING,
-            section_name="Closing & Next Steps",
-            description="Answer questions and assess continued interest",
-            objectives=self.question_frameworks["closing"]["objectives"],
-            estimated_duration_minutes=time_allocations["closing"],
+            section_name="Closing Questions",
+            description="Give the candidate a chance to add anything and ask questions",
+            objectives=self.question_frameworks["closing_questions"]["objectives"],
+            estimated_duration_minutes=time_allocations["closing_questions"],
             questions=[],
             key_evaluation_points=[
-                "Quality of questions asked",
-                "Continued interest in role",
-                "Salary and logistics alignment",
-                "Professional closing impression"
+                "Completeness of coverage",
+                "Candidate questions",
+                "Interest alignment"
             ],
             success_criteria=[
-                "Asks thoughtful questions about role/company",
-                "Maintains enthusiasm throughout interview",
-                "Clear on expectations and next steps"
+                "Candidate asked thoughtful questions",
+                "Any critical gaps were addressed"
             ]
         )
-        sections.append(closing_section)
+        sections.append(closing_q_section)
+
+        # 6) Wrap-up
+        wrapup_section = InterviewSection(
+            phase=InterviewPhase.CLOSING,
+            section_name="Wrap-up",
+            description="Thank them, explain next steps, confirm contact preferences, and close",
+            objectives=self.question_frameworks["wrap_up"]["objectives"],
+            estimated_duration_minutes=time_allocations["wrap_up"],
+            questions=[],
+            key_evaluation_points=[
+                "Professional courtesy",
+                "Clarity on next steps"
+            ],
+            success_criteria=[
+                "Candidate leaves with clear expectations",
+                "Positive closing tone"
+            ]
+        )
+        sections.append(wrapup_section)
         
         return sections
     
     def _calculate_time_allocations(self, total_duration: int) -> Dict[str, int]:
         """Calculate time allocation for each interview section."""
         
-        # Base allocations (as percentages)
+        # Base allocations (as percentages) — informational only
         base_allocations = {
-            "opening": 0.10,    # 10%
-            "technical": 0.35,  # 35% 
-            "experience": 0.25, # 25%
-            "behavioral": 0.25, # 25%
-            "closing": 0.05     # 5%
+            "opening_intro": 0.08,
+            "warm_up": 0.10,
+            "core_main": 0.55,
+            "challenging": 0.15,
+            "closing_questions": 0.07,
+            "wrap_up": 0.05
         }
         
         # Calculate actual minutes
@@ -570,7 +597,7 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
         for phase, percentage in base_allocations.items():
             allocations[phase] = int(total_duration * percentage)
         
-        # Ensure minimum durations (Pydantic validation requires >= 5 minutes)
+        # Ensure minimum durations for model validation (informational only)
         min_duration = 5
         for phase in allocations:
             if allocations[phase] < min_duration:
@@ -579,17 +606,17 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
         # Adjust for any rounding issues and ensure total matches
         total_allocated = sum(allocations.values())
         if total_allocated != total_duration:
-            # Add difference to technical section (usually largest)
-            allocations["technical"] += (total_duration - total_allocated)
+            # Add difference to core_main section (usually largest)
+            allocations["core_main"] += (total_duration - total_allocated)
             
             # If technical section becomes too small, redistribute
-            if allocations["technical"] < min_duration:
+            if allocations["core_main"] < min_duration:
                 # Redistribute from other sections to maintain minimums
-                excess = min_duration - allocations["technical"]
-                allocations["technical"] = min_duration
+                excess = min_duration - allocations["core_main"]
+                allocations["core_main"] = min_duration
                 
                 # Reduce from other sections proportionally
-                for phase in ["experience", "behavioral", "opening"]:
+                for phase in ["closing_questions", "warm_up", "opening_intro"]:
                     if allocations[phase] > min_duration:
                         reduction = min(excess, allocations[phase] - min_duration)
                         allocations[phase] -= reduction
@@ -603,21 +630,25 @@ Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, 
                                         section: InterviewSection,
                                         strategy: Dict[str, Any],
                                         resume_analysis: ResumeAnalysis,
-                                        job_analysis: JobDescriptionAnalysis):
+                                        job_analysis: JobDescriptionAnalysis,
+                                        previous_questions: List[str]):
         """Generate specific questions for an interview section."""
         
         # Build context for question generation
+        target_count = self._get_questions_target_for_section(section)
+
+        prev_q_block = "\n".join([f"- {q}" for q in previous_questions[-20:]]) if previous_questions else "(none)"
+
         question_prompt = f"""CRITICAL CHARACTER RESTRICTIONS:
 - Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
 - DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
 - Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
 - Keep all text content compatible with basic ASCII encoding
 
-Generate {self.config.QUESTIONS_PER_SECTION} interview questions for the {section.section_name} section.
+Generate {target_count} interview questions for the {section.section_name} section.
 
 SECTION DETAILS:
 - Phase: {section.phase.value}
-- Duration: {section.estimated_duration_minutes} minutes
 - Objectives: {', '.join(section.objectives)}
 
 CANDIDATE CONTEXT:
@@ -634,15 +665,17 @@ INTERVIEW STRATEGY:
 - Focus Areas: {', '.join(strategy['focus_areas'][:5])}
 - Areas to Probe: {', '.join(strategy.get('clarifications', [])[:3])}
 
+PREVIOUSLY PLANNED QUESTIONS (avoid repeating these; go a layer deeper instead of restating):
+{prev_q_block}
+
 Generate questions that:
 1. Are appropriate for the interview phase
 2. Target the candidate's specific background
 3. Assess relevant skills for the job requirements
-4. Allow for follow-up and deep exploration
-5. Take 5-10 minutes each to answer (minimum 5 minutes per question)
+4. Allow for follow-up and deeper exploration
+5. Avoid redundancy across sections. Do NOT re-ask high-level "describe your experience with X" if already implied by the resume; ask for specific aspects: constraints, interfaces, debugging approach, rationale, edge cases, trade-offs. Keep depth intermediate (not ultra-expert).
 
 CRITICAL DATA STRUCTURE RULES:
-- estimated_time_minutes MUST be >= 5 (Pydantic validation requirement)
 - skill_focus and evaluation_criteria MUST be arrays, never null
 - Use empty arrays [] for missing optional arrays
 - difficulty_level must be 1-5 integer
@@ -655,7 +688,7 @@ VALID QUESTION TYPES (use exactly these values):
 - "follow_up" - for follow-up questions
 - "clarification" - for clarification questions
 
-Format as JSON array with objects containing: question_text, question_type (one of the valid types above), difficulty_level (1-5), estimated_time_minutes (>=5), skill_focus (array), evaluation_criteria (array)"""
+Format as JSON array with objects containing: question_text, question_type (one of the valid types above), difficulty_level (1-5), estimated_time_minutes (>=1), skill_focus (array), evaluation_criteria (array)"""
         
         try:
             response = await asyncio.to_thread(
@@ -687,13 +720,16 @@ Format as JSON array with objects containing: question_text, question_type (one 
                         question_type=question_type,
                         phase=section.phase,
                         difficulty_level=q_data.get("difficulty_level", 3),
-                        estimated_time_minutes=q_data.get("estimated_time_minutes", 5),
+                        estimated_time_minutes=max(1, q_data.get("estimated_time_minutes", 5)),
                         skill_focus=q_data.get("skill_focus", []),
                         evaluation_criteria=q_data.get("evaluation_criteria", [])
                     )
-                    questions.append(question)
+                    # De-duplicate against previous sections
+                    if not self._is_duplicate_question(question.question_text, previous_questions):
+                        questions.append(question)
                 
-                section.questions = questions
+                # Trim to target count if over-generated
+                section.questions = questions[:target_count]
                 
             except Exception as e:
                 self.logger.warning(f"Failed to parse generated questions: {e}, using fallback")
@@ -702,6 +738,26 @@ Format as JSON array with objects containing: question_text, question_type (one 
         except Exception as e:
             self.logger.warning(f"Question generation failed: {e}, using fallback")
             self._create_fallback_questions(section, resume_analysis, job_analysis)
+
+    def _get_questions_target_for_section(self, section: InterviewSection) -> int:
+        """Determine how many questions to generate for a given section name."""
+        return self.config.QUESTIONS_PER_SECTION_BY_NAME.get(section.section_name, self.config.QUESTIONS_PER_SECTION)
+
+    def _is_duplicate_question(self, question_text: str, previous_questions: List[str]) -> bool:
+        """Simple semantic de-duplication: lowercase match or high token overlap with prior questions."""
+        qt = question_text.strip().lower()
+        if not qt:
+            return True
+        for prev in previous_questions:
+            pv = prev.strip().lower()
+            if pv == qt:
+                return True
+            # token overlap
+            qt_tokens = set([t for t in qt.split() if len(t) > 2])
+            pv_tokens = set([t for t in pv.split() if len(t) > 2])
+            if qt_tokens and (len(qt_tokens & pv_tokens) / len(qt_tokens)) > 0.8:
+                return True
+        return False
     
     def _create_fallback_questions(self,
                                  section: InterviewSection,

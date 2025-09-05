@@ -794,7 +794,10 @@ class EnhancedInterviewPlatform:
             
             # Do not pre-ask the first plan question; let the conductor handle all questions
             try:
-                opening_message = "Welcome! Let's begin the interview."
+                opening_message = (
+                    "Hello, I'm Sophia, your interview conductor today. "
+                    "Before we begin, may I have your name? "
+                )
                 print(f"\n🤖 Interviewer: {opening_message}")
                 if self.tts_service:
                     tts_result = self.tts_service.generate_speech(
@@ -1015,8 +1018,8 @@ class EnhancedAudioRecorder:
                 print("⚠️  No valid audio file for transcription")
                 return
             
-            # Perform transcription
-            result = self.stt_service.transcribe_audio(self.current_filepath)
+            # Perform transcription (force English)
+            result = self.stt_service.transcribe_audio(self.current_filepath, language='en')
             
             if result["success"]:
                 transcription_text = result["text"]
