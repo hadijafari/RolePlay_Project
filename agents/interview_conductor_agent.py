@@ -248,9 +248,31 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             # )
 
             # Add explicit follow-up guidance if at limit
+            # if self.interview_state.current_question_followup_count >= 2:
+            #     candidate_response = f"[SYSTEM NOTE: You have reached the maximum of 2 follow-ups. Please move to the next question.]\n\n{candidate_response}"
+
+            # CRITICAL: Force next question after 2 follow-ups
             if self.interview_state.current_question_followup_count >= 2:
-                candidate_response = f"[SYSTEM NOTE: You have reached the maximum of 2 follow-ups. Please move to the next question.]\n\n{candidate_response}"
+                self.logger.info(f"Forcing next question - already asked {self.interview_state.current_question_followup_count} follow-ups")
+                # Immediately advance without asking more follow-ups
+                self._advance_to_next_question()
+                # Update the next question after advancement
+                current_section = self._get_current_section()
+                if current_section and self.current_question_index < len(current_section.questions):
+                    self.current_plan_question = current_section.questions[self.current_question_index]
+                    next_question_text = self.current_plan_question.question_text
+                    interview_context["NEXT_QUESTION"] = str(next_question_text)
             
+            # Display upcoming question info BEFORE asking
+            current_section = self._get_current_section()
+            if current_section:
+                print(f"\n🎤 INTERVIEW TURN START:")
+                print(f"   Section: {current_section.section_name}")
+                print(f"   Question Index: {self.current_question_index + 1}/{len(current_section.questions)}")
+                print(f"   Follow-ups so far: {self.interview_state.current_question_followup_count}/2")
+            else:
+                print(f"🔴 No current section found")
+
             # Process with structured context (no more text flattening!)
             response = await self.process_request(
                 candidate_response, 
@@ -260,13 +282,6 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
 
 
             current_section = self._get_current_section()
-            if current_section:
-                print(f"\n🎤 INTERVIEW TURN START:")
-                print(f"   Section: {current_section.section_name}")
-                print(f"   Question Index: {self.current_question_index + 1}/{len(current_section.questions)}")
-                print(f"   Follow-ups so far: {self.interview_state.current_question_followup_count}/2")
-            else:
-                print(f"🔴 No current section found")
             # Update question tracking
             # if response.success:
             #     self._track_question_asked(response.content)
@@ -274,12 +289,26 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
 
             # Update question tracking
             if response.success:
+                # Enforce exact plan question delivery (non-follow-up) or closing line
+                enforced_content = None
+                closing_line = "All questions are asked, do you have any questions for me?"
+                if self.plan_questions_asked_count >= self.total_plan_questions:
+                    enforced_content = closing_line
+                else:
+                    # Only enforce for plan questions (not follow-ups)
+                    if self.interview_state.current_question_followup_count == 0 and self.current_plan_question:
+                        expected_q = str(self.current_plan_question.question_text)
+                        if expected_q and expected_q not in response.content:
+                            enforced_content = f"Thank you. Now, {expected_q}"
+
+                if enforced_content:
+                    response.content = enforced_content
                 self._track_question_asked(response.content)
                 self.logger.info(f"Interview turn completed - Phase: {self.interview_state.current_phase.value}")
                 
-                # Check for interview completion signals
-                if self._check_interview_completion(candidate_response, response.content):
-                    self.logger.info("Interview completion detected")
+                # Strict completion: only after all planned questions
+                if self.plan_questions_asked_count >= self.total_plan_questions:
+                    self.logger.info(f"All {self.total_plan_questions} planned questions asked - Interview complete!")
                     self.interview_state.should_continue = False
                     asyncio.create_task(self._trigger_interview_completion())
             
@@ -495,15 +524,34 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             self.interview_state.total_followups_asked += 1
         
         # Determine next action: follow-up or move to next question
-        should_ask_followup = self._should_ask_followup(candidate_response, response_quality)
+        # should_ask_followup = self._should_ask_followup(candidate_response, response_quality)
         
-        if should_ask_followup:
-            # Increment follow-up counter but don't advance question
+        # if should_ask_followup:
+        #     # Increment follow-up counter but don't advance question
+        #     self.interview_state.current_question_followup_count += 1
+        #     self.logger.info(f"Planning follow-up question #{self.interview_state.current_question_followup_count}")
+        # else:
+        #     # Move to next question
+        #     self._advance_to_next_question()
+
+
+        # Determine next action: follow-up or move to next question
+        should_ask_followup = self._should_ask_followup(candidate_response, response_quality)
+
+        # CRITICAL: Always advance after max follow-ups to ensure all 25 questions are asked
+        if self.interview_state.current_question_followup_count >= 2:
+            # Force advancement after 2 follow-ups
+            self.logger.info(f"Reached maximum 2 follow-ups, advancing to next question")
+            self._advance_to_next_question()
+        elif should_ask_followup and self.interview_state.current_question_followup_count < 2:
+            # Only ask follow-up if under the limit
             self.interview_state.current_question_followup_count += 1
-            self.logger.info(f"Planning follow-up question #{self.interview_state.current_question_followup_count}")
+            self.logger.info(f"Planning follow-up question #{self.interview_state.current_question_followup_count}/2")
         else:
             # Move to next question
             self._advance_to_next_question()
+
+        
         
         # Update time tracking
         self._update_time_tracking()
@@ -592,20 +640,30 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             self.logger.info(f"Excellent response quality ({quality_score:.2f}) - skipping follow-up")
             return False
         
-        # Reason 3: Time constraints
-        if self._is_time_constrained():
-            self.logger.info("Time constrained - moving to next question")
-            return False
+        # # Reason 3: Time constraints
+        # if self._is_time_constrained():
+        #     self.logger.info("Time constrained - moving to next question")
+        #     return False
         
-        # Reason 4: Response quality is below minimum - needs follow-up
-        if quality_score < self.followup_config.minimum_response_quality:
-            self.logger.info(f"Low response quality ({quality_score:.2f}) - asking follow-up")
-            return True
+        # # Reason 4: Response quality is below minimum - needs follow-up
+        # if quality_score < self.followup_config.minimum_response_quality:
+        #     self.logger.info(f"Low response quality ({quality_score:.2f}) - asking follow-up")
+        #     return True
         
-        # Reason 5: Response is adequate but could be improved
-        if quality_score < 0.75 and self.interview_state.current_question_followup_count == 0:
-            self.logger.info(f"Adequate response ({quality_score:.2f}) - one follow-up")
+        # # Reason 5: Response is adequate but could be improved
+        # if quality_score < 0.75 and self.interview_state.current_question_followup_count == 0:
+        #     self.logger.info(f"Adequate response ({quality_score:.2f}) - one follow-up")
+        #     return True
+
+        # SIMPLIFIED LOGIC: Only ask follow-up if response is very poor AND we haven't hit the limit
+        if quality_score < 0.4 and self.interview_state.current_question_followup_count < 2:
+            self.logger.info(f"Very low response quality ({quality_score:.2f}) - asking follow-up")
             return True
+
+        # Otherwise, move to next question to ensure we cover all 25
+        return False
+
+
         
         # Default: move to next question
         return False
@@ -652,7 +710,17 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             self.logger.info(f"Completed section {self.current_section_index}: {current_section.section_name}")
             self._advance_to_next_section()
         else:
-            self.logger.info(f"Advanced to question {self.current_question_index + 1} in section {self.current_section_index}")
+            # Enhanced progress logging (compact)
+            current_section = self._get_current_section()
+            if current_section and self.current_question_index < len(current_section.questions):
+                self.logger.info(
+                    f"Next → Sec {self.current_section_index + 1}/{len(self.interview_plan.interview_sections)}"
+                    f" | Q {self.current_question_index + 1}/{len(current_section.questions)}"
+                    f" | Total {self.plan_questions_asked_count}/{self.total_plan_questions}: "
+                    f"{current_section.questions[self.current_question_index].question_text[:80]}..."
+                )
+            elif self.plan_questions_asked_count >= self.total_plan_questions:
+                self.logger.info(f"✅ ALL {self.total_plan_questions} QUESTIONS COMPLETED!")
     
     def _update_time_tracking(self):
         """Update time tracking for the interview."""
@@ -729,13 +797,10 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
         }
     
     def _calculate_completion_percentage(self) -> float:
-        """Calculate interview completion percentage."""
-        # print("InterviewConductorAgent._calculate_completion_percentage is called")
-        if not self.interview_plan.interview_sections:
+        """Calculate interview completion percentage based on plan questions asked."""
+        if self.total_plan_questions == 0:
             return 100.0
-        
-        section_progress = (self.current_section_index / len(self.interview_plan.interview_sections)) * 100
-        return min(100.0, section_progress)
+        return min(100.0, (self.plan_questions_asked_count / self.total_plan_questions) * 100.0)
     
 
     def _check_interview_completion(self, candidate_response: str, agent_response: str) -> bool:
@@ -780,15 +845,26 @@ Remember: Your goal is to conduct a thorough, fair, and engaging interview that 
             self.logger.info("All interview sections completed")
             return True
         
-        # Check if we've asked all planned questions
+
+        # ONLY complete when ALL 25 questions are asked
         if self.plan_questions_asked_count >= self.total_plan_questions:
-            self.logger.info("All planned questions asked")
+            self.logger.info(f"All {self.total_plan_questions} planned questions asked - Interview complete!")
             return True
+            
+        # Don't end based on time - we need all questions asked
+        # Remove time-based completion to ensure all questions are covered
+
+
+
+        # # Check if we've asked all planned questions
+        # if self.plan_questions_asked_count >= self.total_plan_questions:
+        #     self.logger.info("All planned questions asked")
+        #     return True
         
-        # Check for timeout
-        if self.interview_state.time_remaining_minutes <= 0:
-            self.logger.info("Interview time limit reached")
-            return True
+        # # Check for timeout
+        # if self.interview_state.time_remaining_minutes <= 0:
+        #     self.logger.info("Interview time limit reached")
+        #     return True
             
         return False
     

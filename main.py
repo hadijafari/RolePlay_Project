@@ -792,32 +792,18 @@ class EnhancedInterviewPlatform:
             self.interview_active = True
             print("✅ Interview ready to start")
             
-            # Get opening message using the first question from the plan
+            # Do not pre-ask the first plan question; let the conductor handle all questions
             try:
-                if self.interview_plan.interview_sections:
-                    first_section = self.interview_plan.interview_sections[0]
-                    if first_section.questions:
-                        first_question = first_section.questions[0]
-                        opening_message = f"Welcome! Let's begin the interview. {first_question.question_text}"
-                    else:
-                        opening_message = "Welcome! Let's begin the interview. Tell me about yourself and your background."
-                else:
-                    opening_message = "Welcome! Let's begin the interview. Tell me about yourself and your background."
-                
+                opening_message = "Welcome! Let's begin the interview."
                 print(f"\n🤖 Interviewer: {opening_message}")
-                
-                # Use TTS for opening message
                 if self.tts_service:
                     tts_result = self.tts_service.generate_speech(
                         opening_message,
                         play_immediately=True
                     )
-                
                 return True
-                
             except Exception as e:
                 print(f"⚠️  Could not generate opening message: {e}")
-                # Still return True since the interview conductor is ready
                 return True
                 
         except Exception as e:

@@ -259,7 +259,7 @@ class InterviewPlan(BaseModel):
     
     # Interview structure
     interview_sections: List[InterviewSection] = Field(default_factory=list)
-    total_estimated_duration_minutes: int = 30
+    total_estimated_duration_minutes: int = 60
     
     # Interview strategy
     interview_objectives: List[str] = Field(default_factory=list)
@@ -430,9 +430,12 @@ class FollowUpConfig(BaseModel):
     """Configuration for follow-up question management."""
     
     # Follow-up limits
-    max_followups_per_question: int = 2  # Maximum follow-ups per original question
-    max_followups_per_section: int = 8   # Maximum follow-ups per interview section
-    max_time_per_question_minutes: float = 8.0  # Maximum time to spend on one question
+    max_followups_per_question: int = 2  # STRICT LIMIT: Maximum 2 follow-ups per question
+    max_followups_per_section: int = 10   # Allow up to 10 total follow-ups per section (2 per question * 5 questions)
+    max_time_per_question_minutes: float = 999.0  # Remove time constraint to ensure all questions are asked
+
+    # Add a flag to enforce strict question completion
+    enforce_all_questions: bool = True  # MUST ask all 25 questions
     
     # Response quality thresholds (0-1 scale)
     minimum_response_quality: float = 0.6  # Minimum quality to move to next question
