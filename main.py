@@ -32,14 +32,16 @@ except ImportError as e:
     sys.exit(1)
 
 # Import original services
-from config.settings import AudioConfig, STTConfig
+from config.settings import AudioConfig, STTConfig, DeepgramConfig
 from services.stt_service import STTService
 from services.tts_service import TTSService
+from services.deepgram_voice_agent_tab_service import DeepgramVoiceAgentTabService
 
 # Import enhanced services and agents
 try:
     from agents.document_intelligence_agent import DocumentIntelligenceAgent
     from agents.interview_conductor_agent import InterviewConductorAgent
+    # from agents.feedback_agent import FeedbackAgent  # Disabled per request
     from services.interview_planning_service import InterviewPlanningService
     from services.context_injection_service import ContextInjectionService
     from models.interview_models import (
@@ -75,11 +77,12 @@ class EnhancedInterviewPlatform:
     - Dynamic interview management with real-time adaptation
     """
     
-    def __init__(self, minimal_logging: bool = True):
+    def __init__(self, minimal_logging: bool = True, use_deepgram: bool = True):
         # print(f"main.py: Class EnhancedInterviewPlatform.__init__ called: Initialize the enhanced interview platform")
         self.minimal_logging = minimal_logging
+        self.use_deepgram = use_deepgram
         
-        # Document analysis state
+        # Document analysis state (unchanged)
         self.current_resume_path = None
         self.current_job_description_path = None
         self.resume_analysis = None
@@ -92,32 +95,63 @@ class EnhancedInterviewPlatform:
         self.interview_conductor = None
         self.interview_state = None
         
-        # Initialize original services
-        self._initialize_core_services()
+        # Initialize services based on mode
+        if self.use_deepgram:
+            self._initialize_deepgram_services()
+        else:
+            self._initialize_core_services()
         
         # Initialize enhanced services if available
         if ENHANCED_FEATURES_AVAILABLE:
             self._initialize_enhanced_services()
         
-        # Initialize recorder with enhanced capabilities
-        self.recorder = EnhancedAudioRecorder(
-            stt_service=self.stt_service,
-            tts_service=self.tts_service,
-            document_agent=getattr(self, 'document_agent', None),
-            interview_conductor=None,  # Explicitly None for now
-            interview_plan=None  # Explicitly None for now
-        )
+        # Initialize recorder based on mode
+        if self.use_deepgram:
+            # Deepgram Voice Agent will handle recording internally with TAB key
+            self.recorder = None
+            print("✅ Using Deepgram Voice Agent with TAB recording")
+        else:
+            # Original recorder for fallback mode
+            self.recorder = EnhancedAudioRecorder(
+                stt_service=self.stt_service,
+                tts_service=self.tts_service,
+                document_agent=getattr(self, 'document_agent', None),
+                interview_conductor=None,  # Explicitly None for now
+                interview_plan=None,  # Explicitly None for now
+                feedback_agent=getattr(self, 'feedback_agent', None)
+            )
         
         # Application state
         self.running = False
     
     def update_recorder_interview_components(self):
-        """Update recorder with interview components after they're created."""
+        """Update recorder/voice agent with interview components after they're created."""
         # print(f"main.py: Class EnhancedInterviewPlatform.update_recorder_interview_components called: Update recorder with interview components after they're created.")
-        if hasattr(self, 'recorder'):
+        if self.use_deepgram and hasattr(self, 'voice_agent'):
+            self.voice_agent.update_interview_context(self.interview_conductor, self.interview_plan)
+            print("✅ Voice Agent updated with interview conductor and plan")
+        elif hasattr(self, 'recorder') and self.recorder:
             self.recorder.interview_conductor = self.interview_conductor
             self.recorder.interview_plan = self.interview_plan
             print("✅ Recorder updated with interview conductor and plan")
+    
+    def _initialize_deepgram_services(self):
+        """Initialize Deepgram Voice Agent service with TAB recording."""
+        try:
+            self.voice_agent = DeepgramVoiceAgentTabService(
+                interview_conductor=None,  # Will be set later
+                interview_plan=None  # Will be set later
+            )
+            if not self.minimal_logging:
+                print("✅ Deepgram Voice Agent TAB service initialized")
+            # Set placeholder for compatibility
+            self.stt_service = None
+            self.tts_service = None
+        except Exception as e:
+            print(f"⚠️  Deepgram Voice Agent initialization failed: {e}")
+            print("⚠️  Falling back to original services")
+            self.use_deepgram = False
+            self._initialize_core_services()
     
     def _initialize_core_services(self):
         """Initialize core STT and TTS services."""
@@ -164,6 +198,18 @@ class EnhancedInterviewPlatform:
         except Exception as e:
             print(f"⚠️  Interview Planning Service initialization failed: {e}")
             self.interview_planning_service = None
+        
+        # Feedback agent disabled per request
+        # try:
+        #     # Initialize feedback agent
+        #     print("Initialize feedback agent")
+        #     self.feedback_agent = FeedbackAgent()
+        #     if not self.minimal_logging:
+        #         print("✅ Feedback Agent initialized")
+        # except Exception as e:
+        #     print(f"⚠️  Feedback Agent initialization failed: {e}")
+        #     self.feedback_agent = None
+        self.feedback_agent = None  # Disabled for testing
         
         try:
             # Initialize context injection service
@@ -231,28 +277,33 @@ class EnhancedInterviewPlatform:
         """Main application loop with enhanced features."""
         # print(f"main.py: Class EnhancedInterviewPlatform.run called: Main application loop with enhanced features.")
         try:
-            # Check microphone access
-            if not self.recorder.check_microphone_access():
-                return
-            
-            # Test services
-            await self._test_services()
-            
-            # Display welcome
-            self.display_welcome()
-            
-            # Set up keyboard handlers
-            self.setup_keyboard_handlers()
-            
-            # Start main loop
-            self.running = True
-            
-            if ENHANCED_FEATURES_AVAILABLE:
-                # Run enhanced mode with automatic setup
-                await self._run_enhanced_mode()
+            if self.use_deepgram:
+                # Run with Deepgram Voice Agent
+                await self._run_deepgram_mode()
             else:
-                # Run basic mode
-                await self._run_basic_mode()
+                # Original flow with recorder
+                # Check microphone access
+                if not self.recorder.check_microphone_access():
+                    return
+                
+                # Test services
+                await self._test_services()
+                
+                # Display welcome
+                self.display_welcome()
+                
+                # Set up keyboard handlers
+                self.setup_keyboard_handlers()
+                
+                # Start main loop
+                self.running = True
+                
+                if ENHANCED_FEATURES_AVAILABLE:
+                    # Run enhanced mode with automatic setup
+                    await self._run_enhanced_mode()
+                else:
+                    # Run basic mode
+                    await self._run_basic_mode()
         
         except KeyboardInterrupt:
             print("\nInterview Platform: Interrupted by user")
@@ -288,6 +339,80 @@ class EnhancedInterviewPlatform:
                 print("✅ Document Intelligence Agent ready")
             if hasattr(self, 'interview_planning_service') and self.interview_planning_service:
                 print("✅ Interview Planning Service ready")
+    
+    async def _run_deepgram_mode(self):
+        """Run interview with Deepgram Voice Agent using TAB recording."""
+        print("\n🎙️ Starting Deepgram Voice Agent Mode (TAB Recording)...")
+        
+        try:
+            # Display welcome
+            self.display_welcome()
+            
+            self.running = True
+            
+            # Use automatic interview setup to load documents
+            setup_success = await self._automatic_interview_setup()
+            
+            if setup_success and self.interview_plan:
+                print("\n🎯 Interview setup completed successfully")
+                
+                # Update voice agent with interview context
+                self.voice_agent.update_interview_context(
+                    self.interview_conductor,
+                    self.interview_plan
+                )
+                
+                # Connect to Deepgram
+                print("\n🔌 Connecting to Deepgram Voice Agent...")
+                if await self.voice_agent.connect():
+                    print("✅ Connected successfully")
+                    
+                    # Set up keyboard handlers for TAB recording
+                    self.voice_agent.setup_keyboard_handlers()
+                    
+                    print("\n" + "="*60)
+                    print("🎤 READY FOR INTERVIEW")
+                    print("="*60)
+                    print("📌 Hold TAB to record your response")
+                    print("📌 Release TAB to send to interviewer")
+                    print("📌 Press Ctrl+C to exit")
+                    print("="*60 + "\n")
+                    
+                    # Keep the program running
+                    while self.running:
+                        await asyncio.sleep(0.1)
+                else:
+                    print("❌ Failed to connect to Deepgram")
+            else:
+                print("⚠️  Starting without interview plan - basic conversation mode")
+                # Connect anyway for basic conversation
+                if await self.voice_agent.connect():
+                    print("✅ Connected successfully")
+                    
+                    # Set up keyboard handlers for TAB recording
+                    self.voice_agent.setup_keyboard_handlers()
+                    
+                    print("\n" + "="*60)
+                    print("🎤 READY FOR CONVERSATION")
+                    print("="*60)
+                    print("📌 Hold TAB to record your message")
+                    print("📌 Release TAB to send to assistant")
+                    print("📌 Press Ctrl+C to exit")
+                    print("="*60 + "\n")
+                    
+                    while self.running:
+                        await asyncio.sleep(0.1)
+                else:
+                    print("❌ Failed to connect to Deepgram")
+                    
+        except KeyboardInterrupt:
+            print("\n⏹️ Stopping Voice Agent...")
+            self.running = False
+        except Exception as e:
+            print(f"❌ Error in Deepgram mode: {e}")
+            import traceback
+            traceback.print_exc()
+            self.running = False
     
     async def _run_enhanced_mode(self):
         """Run application in enhanced mode with automatic setup."""
@@ -329,8 +454,15 @@ class EnhancedInterviewPlatform:
         # print(f"main.py: Class EnhancedInterviewPlatform._cleanup called: Clean up all resources.")
         print("🧹 Cleaning up...")
         
+        # Cleanup Deepgram Voice Agent
+        if self.use_deepgram and hasattr(self, 'voice_agent'):
+            self.voice_agent.disconnect()
+            # Save conversation history
+            self.voice_agent.save_conversation()
+            print("✅ Voice Agent disconnected and conversation saved")
+        
         # Cleanup recorder
-        if hasattr(self, 'recorder'):
+        if hasattr(self, 'recorder') and self.recorder:
             self.recorder.cleanup()
         
         # Cleanup enhanced services
@@ -823,7 +955,7 @@ class EnhancedAudioRecorder:
     """
     
     def __init__(self, stt_service=None, tts_service=None, document_agent=None, 
-                 interview_conductor=None, interview_plan=None):
+                 interview_conductor=None, interview_plan=None, feedback_agent=None):
         # print(f"main.py: Class EnhancedAudioRecorder.__init__ called: Initialize the enhanced audio recorder.")
         # Initialize base recorder functionality
         self.audio = pyaudio.PyAudio()
@@ -836,6 +968,7 @@ class EnhancedAudioRecorder:
         self.document_agent = document_agent
         self.interview_conductor = interview_conductor
         self.interview_plan = interview_plan
+        self.feedback_agent = feedback_agent
         
         # Recording state
         self.minimal_logging = False
@@ -1187,6 +1320,34 @@ class EnhancedAudioRecorder:
                         print("🎉 Interview completed!")
                         # Handle completion synchronously
                         loop.run_until_complete(self._handle_interview_completion())
+
+                    # Fire-and-forget: run Feedback Agent in background
+                    try:
+                        if self.feedback_agent and self.interview_conductor and self.interview_conductor.current_plan_question:
+                            question_text = self.interview_conductor.current_plan_question.question_text
+                            answer_text = transcription_text
+                            def _run_feedback():
+                                try:
+                                    import asyncio as _asyncio
+                                    _loop = _asyncio.new_event_loop()
+                                    _asyncio.set_event_loop(_loop)
+                                    result = _loop.run_until_complete(
+                                        self.feedback_agent.evaluate(question_text, answer_text)
+                                    )
+                                    print("\n🧩 Feedback (non-blocking):")
+                                    print(result.content)
+                                except Exception as fe:
+                                    print(f"⚠️  Feedback Agent error: {fe}")
+                                finally:
+                                    try:
+                                        _loop.close()
+                                    except Exception:
+                                        pass
+                            import threading as _threading
+                            _t = _threading.Thread(target=_run_feedback, daemon=True)
+                            _t.start()
+                    except Exception as _e:
+                        print(f"⚠️  Could not start Feedback Agent: {_e}")
                         
                 else:
                     print(f"❌ Interview conductor error: {conductor_response.error}")

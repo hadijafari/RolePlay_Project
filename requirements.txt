@@ -14,7 +14,10 @@ keyboard>=0.13.5
 openai>=1.3.0
 python-dotenv>=1.0.0
 
-# Text-to-Speech functionality
+# Deepgram Voice Agent API for real-time conversation
+deepgram-sdk>=3.0.0  # Real-time STT/TTS with Voice Agent
+
+# Text-to-Speech functionality (fallback mode)
 elevenlabs>=0.2.26
 pygame>=2.5.0  # For audio playback
 
@@ -126,7 +129,8 @@ mypy>=1.0.0  # Type checking
 # 
 # ENVIRONMENT VARIABLES (.env file):
 # OPENAI_API_KEY=your_openai_api_key_here
-# ELEVENLABS_MAIN_API_KEY=your_elevenlabs_api_key_here
+# DEEPGRAM_API_KEY=your_deepgram_api_key_here
+# ELEVENLABS_MAIN_API_KEY=your_elevenlabs_api_key_here (optional, for fallback mode)
 # 
 # API KEY SETUP:
 # 1. OpenAI API Key:
@@ -134,7 +138,12 @@ mypy>=1.0.0  # Type checking
 #    - Create API key in dashboard
 #    - Add to .env file as OPENAI_API_KEY
 # 
-# 2. ElevenLabs API Key:
+# 2. Deepgram API Key:
+#    - Sign up at https://console.deepgram.com/
+#    - Create API key in dashboard
+#    - Add to .env file as DEEPGRAM_API_KEY
+# 
+# 3. ElevenLabs API Key (optional, for fallback mode):
 #    - Sign up at https://elevenlabs.io/
 #    - Get API key from settings
 #    - Add to .env file as ELEVENLABS_MAIN_API_KEY

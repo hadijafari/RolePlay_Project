@@ -154,6 +154,54 @@ class STTConfig:
     SUPPORTED_LANGUAGES = [
         'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'
     ]
+
+
+class DeepgramConfig:
+    """Deepgram Voice Agent configuration settings."""
+    
+    # API settings
+    API_KEY_ENV = "DEEPGRAM_API_KEY"
+    ENABLED = True  # Enable/disable Deepgram Voice Agent
+    
+    # Audio input settings (microphone)
+    INPUT_ENCODING = "linear16"
+    INPUT_SAMPLE_RATE = 16000  # 16kHz for microphone input
+    INPUT_CHANNELS = 1  # Mono
+    
+    # Audio output settings (speakers)
+    OUTPUT_ENCODING = "linear16"  
+    OUTPUT_SAMPLE_RATE = 16000  # 16kHz for playback
+    OUTPUT_CONTAINER = "none"  # Raw audio for streaming
+    
+    # Speech-to-Text settings
+    STT_PROVIDER = "deepgram"
+    STT_MODEL = "nova-3"  # Deepgram's latest STT model
+    
+    # Language Model settings
+    LLM_PROVIDER = "open_ai"
+    LLM_MODEL = "gpt-4o-mini"  # Using GPT-4o-mini as requested
+    
+    # Text-to-Speech settings
+    TTS_PROVIDER = "deepgram"
+    TTS_MODEL = "aura-2-thalia-en"  # Professional English voice
+    
+    # Agent behavior settings
+    LANGUAGE = "en"  # English only
+    GREETING_INTERVIEW = "Hello! Welcome to your interview. I'm ready to begin when you are. Please introduce yourself."
+    GREETING_DEFAULT = "Hello! How can I assist you today?"
+    
+    # Connection settings
+    KEEPALIVE_ENABLED = True
+    KEEPALIVE_INTERVAL = 5  # seconds
+    CONNECTION_TIMEOUT = 30  # seconds
+    
+    # Performance settings
+    CHUNK_SIZE = 1024  # Audio chunk size
+    BUFFER_SIZE = 8192  # Audio buffer size
+    
+    # File settings
+    BASE_DIR = Path(__file__).parent.parent
+    CONVERSATION_DIR = BASE_DIR / "conversations"
     
     @classmethod
     def get_stt_info(cls):
@@ -199,4 +247,4 @@ class STTConfig:
 
 
 # Export main configuration classes
-__all__ = ['AudioConfig', 'AppConfig', 'SystemConfig', 'STTConfig']
+__all__ = ['AudioConfig', 'AppConfig', 'SystemConfig', 'STTConfig', 'DeepgramConfig']
