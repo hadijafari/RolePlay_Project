@@ -1,5 +1,5 @@
 """
-Deepgram Voice Agent Service with Tab-Key Recording
+Simplified Deepgram Voice Agent Service with Tab-Key Recording
 Records audio while TAB is held, then sends to Deepgram Voice Agent
 """
 
@@ -40,32 +40,16 @@ load_dotenv(env_path)
 
 class DeepgramVoiceAgentTabService:
     """
-    Service for managing voice conversations using Deepgram Voice Agent with TAB key recording.
-    
-    This service provides:
-    - TAB key controlled recording
-    - Send complete audio to Deepgram Voice Agent
-    - Receive and play response
+    Simplified service for managing voice conversations using Deepgram Voice Agent with TAB key recording.
     """
     
-    def __init__(self, interview_conductor=None, interview_plan=None):
-        """
-        Initialize Deepgram Voice Agent service with TAB recording.
-        
-        Args:
-            interview_conductor: Optional interview conductor agent for context
-            interview_plan: Optional interview plan for structured interviews
-        """
+    def __init__(self):
         self.logger = self._setup_logger()
         
         # API Configuration
         self.api_key = os.getenv("DEEPGRAM_API_KEY")
         if not self.api_key:
             raise ValueError("DEEPGRAM_API_KEY not found in .env file")
-        
-        # Interview components
-        self.interview_conductor = interview_conductor
-        self.interview_plan = interview_plan
         
         # Connection state
         self.connection = None
@@ -93,7 +77,6 @@ class DeepgramVoiceAgentTabService:
         
         # Conversation tracking
         self.conversation_log = []
-        self.current_turn_count = 0
         self.waiting_for_response = False
         
         # Statistics
@@ -103,22 +86,113 @@ class DeepgramVoiceAgentTabService:
             "total_recordings": 0
         }
         
-        # Progressive streaming (send while holding TAB)
-        self.progressive_streaming_enabled = True
-        self.segment_buffer = bytearray()
-        self.segment_lock = threading.Lock()
-        self.segment_sender_thread = None
-        self.segment_running = False
-        self.segment_seconds = 6  # target duration per segment
-        self.bytes_per_second = int(self.rate * 2 * self.channels)  # 16-bit mono
-        self.segment_bytes_target = self.bytes_per_second * self.segment_seconds
+        self.logger.info("Simplified Deepgram Voice Agent TAB Service initialized")
+    
+    def _get_hardcoded_system_prompt(self) -> str:
+        """Return the complete hardcoded system prompt with all 25 questions."""
+        return """You are conducting a natural Electronic Engineering interview conversation. You need to ask these questions in this exact order, but make it sound like a normal conversation:
+
+- Tell me about your experience with microcontroller programming and which platforms you've worked with.
+- How do you approach debugging embedded C code when dealing with hardware-specific issues?
+- Explain the difference between polling and interrupt-driven programming in microcontrollers.
+- What factors do you consider when selecting a microcontroller for a new project?
+- How do you handle memory management in resource-constrained embedded systems?
+- Describe your experience with communication protocols like SPI, I2C, and UART.
+- What tools do you use for PCB design and why do you prefer them?
+- How do you ensure signal integrity in high-speed digital PCB designs?
+- Explain the importance of ground planes and power distribution in PCB layout.
+- What considerations do you make for EMI/EMC compliance in PCB design?
+- How do you approach component placement and routing optimization on a PCB?
+- Describe your experience with multi-layer PCB design and stackup considerations.
+- What is your process for PCB design rule checking and design verification?
+- How do you handle thermal management in PCB designs with high-power components?
+- Explain the differences between through-hole and surface-mount components and when to use each.
+- What experience do you have with analog circuit design and mixed-signal PCBs?
+- How do you approach power supply design for embedded systems?
+- Describe your experience with real-time operating systems (RTOS) in embedded applications.
+- What debugging tools and techniques do you use for embedded systems development?
+- How do you ensure code reliability and fault tolerance in critical embedded applications?
+- Explain your approach to low-power design in battery-operated devices.
+- What experience do you have with wireless communication protocols in embedded systems?
+- How do you handle version control and documentation for hardware and firmware projects?
+- Describe a challenging embedded systems project you've worked on and how you solved the technical issues.
+- What trends do you see in embedded systems and PCB design, and how do you stay current with technology?
+
+CRITICAL INSTRUCTIONS:
+- Ask these questions in the exact order listed above
+- Make it sound like a natural conversation - don't say question numbers or "first question", "second question", etc.
+- After each answer, acknowledge their response naturally and move to the next topic
+- Do NOT ask follow-up questions or elaborations
+- Do NOT skip questions or ask them out of order
+- Do NOT create your own questions
+- Keep the conversation flowing naturally
+- Start with: "Tell me about your experience with microcontroller programming and which platforms you've worked with."
+
+You are a friendly, professional interviewer conducting an Electronic Engineering interview focused on Microcontroller Programming, PCB Design, and Embedded Systems."""
+    
+    async def start_interview(self):
+        """Start the interview with keyboard controls."""
+        import keyboard
         
-        # Nudge mechanism for stalled responses
-        self.last_send_time = None
-        self.nudge_sent = False
-        self.agent_ready = False
+        print("🎤 Interview started! Hold TAB to speak, release to send")
+        print("❌ Press Ctrl+C to exit")
         
-        self.logger.info("Deepgram Voice Agent TAB Service initialized")
+        try:
+            # Set up keyboard event handlers
+            keyboard.on_press_key('tab', lambda _: self.start_recording())
+            keyboard.on_release_key('tab', lambda _: self.stop_recording())
+            
+            # Keep the program running
+            while self.is_connected:
+                await asyncio.sleep(0.1)  # Small delay to prevent busy waiting
+                
+        except KeyboardInterrupt:
+            print("\n🛑 Interview stopped by user")
+        except Exception as e:
+            print(f"❌ Error in interview loop: {e}")
+            self.logger.error(f"Interview loop error: {e}")
+        finally:
+            # Clean up keyboard hooks
+            try:
+                keyboard.unhook_all()
+            except:
+                pass
+    
+    async def disconnect(self):
+        """Disconnect from Deepgram and clean up resources."""
+        print("🔌 Disconnecting from Deepgram...")
+        
+        self.is_connected = False
+        
+        # Close connection
+        if self.connection:
+            try:
+                self.connection.finish()
+            except Exception as e:
+                self.logger.error(f"Error closing connection: {e}")
+        
+        # Clean up audio resources
+        if self.output_stream:
+            try:
+                self.output_stream.stop_stream()
+                self.output_stream.close()
+            except Exception as e:
+                self.logger.error(f"Error closing output stream: {e}")
+        
+        if self.recording_stream:
+            try:
+                self.recording_stream.stop_stream()
+                self.recording_stream.close()
+            except Exception as e:
+                self.logger.error(f"Error closing recording stream: {e}")
+        
+        if self.audio:
+            try:
+                self.audio.terminate()
+            except Exception as e:
+                self.logger.error(f"Error terminating audio: {e}")
+        
+        print("✅ Disconnected successfully")
     
     def _setup_logger(self) -> logging.Logger:
         """Set up logging for the service."""
@@ -134,40 +208,6 @@ class DeepgramVoiceAgentTabService:
             logger.addHandler(handler)
         
         return logger
-    
-    def _build_agent_prompt(self) -> str:
-        """Build the agent prompt based on interview context."""
-        base_prompt = """You are a Professional Interview Conductor AI conducting a structured interview.
-
-CRITICAL: Always respond in English regardless of the candidate's language.
-
-Your role:
-1. Maintain a warm, professional, and engaging tone
-2. Ask relevant interview questions based on the context
-3. Listen actively and ask thoughtful follow-up questions
-4. Keep the conversation focused and productive
-5. Provide clear, concise responses
-
-Remember to:
-- Be respectful and encouraging
-- Allow the candidate time to think
-- Ask for clarification when needed
-- Keep responses brief and to the point
-"""
-        
-        if self.interview_conductor and self.interview_plan:
-            # Add interview-specific context
-            base_prompt += f"""
-
-INTERVIEW CONTEXT:
-- Role: {self.interview_plan.job_title if hasattr(self.interview_plan, 'job_title') else 'General'}
-- Focus Areas: {', '.join(self.interview_plan.key_focus_areas) if hasattr(self.interview_plan, 'key_focus_areas') else 'General assessment'}
-- Interview Type: Structured behavioral and technical interview
-
-Please conduct the interview according to the plan while maintaining natural conversation flow.
-"""
-        
-        return base_prompt
     
     async def connect(self) -> bool:
         """
@@ -208,20 +248,22 @@ Please conduct the interview according to the plan while maintaining natural con
             options.agent.listen.provider.type = "deepgram"
             options.agent.listen.provider.model = "nova-3"
             
-            # LLM settings - OpenAI GPT-4o-mini
+            # LLM settings - OpenAI GPT-4o-mini with hardcoded prompt
             options.agent.think.provider.type = "open_ai"
             options.agent.think.provider.model = "gpt-4o-mini"
-            options.agent.think.prompt = self._build_agent_prompt()
+            options.agent.think.prompt = self._get_hardcoded_system_prompt()
             
             # Text-to-Speech settings
             options.agent.speak.provider.type = "deepgram"
             options.agent.speak.provider.model = "aura-2-thalia-en"
             
             # Initial greeting
-            if self.interview_conductor:
-                options.agent.greeting = "Hello! Welcome to your interview. I'm ready to begin when you are. Please hold TAB and introduce yourself."
-            else:
-                options.agent.greeting = "Hello! How can I assist you today? Hold TAB to speak."
+            options.agent.greeting = (
+                "Hello! Welcome to your interview. "
+                "I'm going to ask you 25 questions about microcontroller programming and PCB design. "
+                "Please hold TAB to speak and release when you're done answering each question. "
+                "Let's begin with the first question."
+            )
             
             # Register event handlers
             self._register_event_handlers()
@@ -238,6 +280,7 @@ Please conduct the interview according to the plan while maintaining natural con
             
             self.is_connected = True
             self.connection_start_time = time.time()
+            print("✅ DEEPGRAM CONNECTION ESTABLISHED")
             
             # Start keep-alive thread
             self._start_keep_alive()
@@ -293,7 +336,6 @@ Please conduct the interview according to the plan while maintaining natural con
                 print(f"🗣️  You: {conversation_text.content}")
             elif conversation_text.role == "assistant":
                 print(f"🤖 Interviewer: {conversation_text.content}")
-                # Consider response arrived as soon as assistant text is available
                 if self.waiting_for_response:
                     self.waiting_for_response = False
                     self.logger.debug("Turn completed by ConversationText (assistant)")
@@ -301,6 +343,8 @@ Please conduct the interview according to the plan while maintaining natural con
         # Agent audio done handler
         def on_agent_audio_done(_, agent_audio_done, **kwargs):
             """Handle when agent finishes speaking."""
+            print(f"\n🎯 AGENT_AUDIO_DONE EVENT TRIGGERED!")
+            
             # Flush remaining audio buffer
             if len(self.audio_buffer) > 0:
                 self.audio_output_queue.put(bytes(self.audio_buffer))
@@ -308,11 +352,14 @@ Please conduct the interview according to the plan while maintaining natural con
             
             self.waiting_for_response = False
             self.stats["total_turns"] += 1
+            
             print("✅ Agent finished speaking - Hold TAB to respond")
         
         # User started speaking handler
         def on_user_started_speaking(_, user_started_speaking, **kwargs):
             """Handle when user starts speaking."""
+            print("🎤 USER STARTED SPEAKING - Agent must have finished")
+            
             # Clear output queue to stop agent playback
             while not self.audio_output_queue.empty():
                 try:
@@ -325,13 +372,12 @@ Please conduct the interview according to the plan while maintaining natural con
             """Handle when agent is thinking."""
             print("🤔 Agent is thinking...")
             self.logger.info(f"Agent thinking event: {agent_thinking}")
-            # Reset nudge flag when agent starts thinking
-            self.nudge_sent = False
         
         # Agent started speaking handler
         def on_agent_started_speaking(_, agent_started_speaking, **kwargs):
             """Handle when agent starts speaking."""
             self.audio_buffer = bytearray()  # Reset buffer for new response
+            
             print("🎤 Agent is speaking...")
             self.logger.info(f"Agent started speaking event: {agent_started_speaking}")
             # Release wait as soon as agent begins speaking
@@ -339,23 +385,6 @@ Please conduct the interview according to the plan while maintaining natural con
                 self.waiting_for_response = False
                 self.logger.debug("Turn completed by AgentStartedSpeaking")
         
-        # History handler (prevents duplicate Unknown/Unhandled logs)
-        def on_history(_, history, **kwargs):
-            """Handle Deepgram History events without duplicate prints."""
-            try:
-                # History typically includes role/content; we store it but avoid printing
-                entry = {
-                    "role": getattr(history, "role", None),
-                    "content": getattr(history, "content", None),
-                    "timestamp": datetime.now().isoformat(),
-                    "source": "history"
-                }
-                self.conversation_log.append(entry)
-                self.logger.debug("History event captured")
-            except Exception:
-                # Best-effort: do not raise; just avoid noisy output
-                pass
-
         # Welcome message handler
         def on_welcome(_, welcome, **kwargs):
             """Handle welcome message."""
@@ -366,7 +395,6 @@ Please conduct the interview according to the plan while maintaining natural con
         def on_settings_applied(_, settings_applied, **kwargs):
             """Handle settings confirmation."""
             self.logger.info("Settings applied successfully")
-            self.agent_ready = True
             print("🟢 Agent is ready for conversation")
         
         # Error handler
@@ -391,19 +419,6 @@ Please conduct the interview according to the plan while maintaining natural con
             self.logger.info("Connection closed")
             self.is_connected = False
         
-        # Unhandled event handler - catches any events we're not explicitly handling
-        def on_unhandled(_, unhandled, **kwargs):
-            """Handle unhandled events."""
-            try:
-                raw = getattr(unhandled, "raw", "")
-                # Suppress duplicate logs for History events
-                if isinstance(raw, str) and ('"type":"History"' in raw or "'type': 'History'" in raw):
-                    return
-            except Exception:
-                pass
-            self.logger.info(f"Unhandled event: {unhandled}")
-            print(f"📝 Unhandled event: {unhandled}")
-        
         # Register all handlers
         self.connection.on(AgentWebSocketEvents.AudioData, on_audio_data)
         self.connection.on(AgentWebSocketEvents.ConversationText, on_conversation_text)
@@ -411,18 +426,11 @@ Please conduct the interview according to the plan while maintaining natural con
         self.connection.on(AgentWebSocketEvents.UserStartedSpeaking, on_user_started_speaking)
         self.connection.on(AgentWebSocketEvents.AgentThinking, on_agent_thinking)
         self.connection.on(AgentWebSocketEvents.AgentStartedSpeaking, on_agent_started_speaking)
-        # History is surfaced by the server to replay context
-        try:
-            self.connection.on(AgentWebSocketEvents.History, on_history)
-        except Exception:
-            # Older SDKs may not expose History; ignore silently
-            pass
         self.connection.on(AgentWebSocketEvents.Welcome, on_welcome)
         self.connection.on(AgentWebSocketEvents.SettingsApplied, on_settings_applied)
         self.connection.on(AgentWebSocketEvents.Error, on_error)
-        # self.connection.on(AgentWebSocketEvents.Warning, on_warning)  # Uncomment if Warning event exists
         self.connection.on(AgentWebSocketEvents.Close, on_close)
-        self.connection.on(AgentWebSocketEvents.Unhandled, on_unhandled)
+        print("✅ Event handlers registered")
         
         self.logger.debug("Event handlers registered")
     
@@ -435,32 +443,11 @@ Please conduct the interview according to the plan while maintaining natural con
                     try:
                         self.connection.send(str(AgentKeepAlive()))
                         self.logger.debug("Keep-alive sent")
-                        # Check if we need to send a nudge
-                        self._check_and_send_nudge()
                     except Exception as e:
                         self.logger.error(f"Keep-alive error: {e}")
         
         self.keep_alive_thread = threading.Thread(target=send_keep_alive, daemon=True)
         self.keep_alive_thread.start()
-    
-    def _check_and_send_nudge(self):
-        """Send a nudge if no AgentThinking received within 2 seconds of last send."""
-        if (self.waiting_for_response and 
-            self.last_send_time and 
-            not self.nudge_sent and
-            time.time() - self.last_send_time > 2.0):
-            
-            try:
-                # Send a 200ms silence nudge
-                silence_ms = 200
-                bytes_per_sample = 2  # 16-bit linear16
-                silence_bytes = int(self.rate * (silence_ms / 1000.0)) * bytes_per_sample
-                self.connection.send(b"\x00" * silence_bytes)
-                self.nudge_sent = True
-                self.logger.info("Sent nudge to wake up agent")
-                print("📢 Sent nudge to agent")
-            except Exception as e:
-                self.logger.error(f"Error sending nudge: {e}")
     
     def start_recording(self):
         """Start recording audio when TAB is pressed."""
@@ -485,12 +472,6 @@ Please conduct the interview according to the plan while maintaining natural con
                 recording_thread = threading.Thread(target=self._record_audio, daemon=True)
                 recording_thread.start()
                 
-                # Start progressive sender if enabled
-                if self.progressive_streaming_enabled:
-                    self.segment_running = True
-                    self.segment_sender_thread = threading.Thread(target=self._segment_sender_worker, daemon=True)
-                    self.segment_sender_thread.start()
-                
                 print("🎤 Recording... (release TAB to send)")
                 
             except Exception as e:
@@ -503,112 +484,9 @@ Please conduct the interview according to the plan while maintaining natural con
             try:
                 data = self.recording_stream.read(self.chunk_size, exception_on_overflow=False)
                 self.recording_frames.append(data)
-                # Feed progressive segment buffer when enabled
-                if self.progressive_streaming_enabled:
-                    with self.segment_lock:
-                        self.segment_buffer.extend(data)
             except Exception as e:
                 self.logger.error(f"Recording error: {e}")
                 break
-    
-    def _segment_sender_worker(self):
-        """Continuously flush ~6s segments to Deepgram while TAB is held."""
-        while self.segment_running and self.is_connected and self.connection:
-            try:
-                to_send = b""
-                with self.segment_lock:
-                    if len(self.segment_buffer) >= self.segment_bytes_target:
-                        to_send = bytes(self.segment_buffer[:self.segment_bytes_target])
-                        del self.segment_buffer[:self.segment_bytes_target]
-                if to_send:
-                    # Stream this segment in chunks
-                    chunk_size = 8192
-                    total_sent = 0
-                    for i in range(0, len(to_send), chunk_size):
-                        chunk = to_send[i:i + chunk_size]
-                        try:
-                            self.connection.send(chunk)
-                            total_sent += len(chunk)
-                            self.logger.debug(f"Sent progressive chunk: {len(chunk)} bytes")
-                            time.sleep(0.01)
-                        except Exception as send_error:
-                            self.logger.error(f"Error sending progressive chunk: {send_error}")
-                            break
-                    if total_sent:
-                        self.logger.info(f"Progressive segment sent: {total_sent} bytes")
-                else:
-                    time.sleep(0.05)
-            except Exception as e:
-                self.logger.error(f"Segment sender error: {e}")
-                time.sleep(0.1)
-
-    def _flush_final_segment_and_wait(self):
-        """Flush remaining progressive audio and wait for response."""
-        if not self.is_connected or not self.connection:
-            print("❌ Not connected to Deepgram")
-            return
-        try:
-            self.waiting_for_response = True
-            print("📤 Sending audio to Deepgram...")
-            self.logger.info(f"Connection status: connected={self.is_connected}")
-            
-            # Collect remaining unflushed audio
-            with self.segment_lock:
-                audio_data = bytes(self.segment_buffer)
-                self.segment_buffer.clear()
-            
-            # Log audio details
-            self.logger.info(f"Sending audio: {len(audio_data)} bytes, sample rate: {self.rate}, channels: {self.channels}")
-            
-            if not self.is_connected:
-                print("❌ Connection lost before sending audio")
-                self.waiting_for_response = False
-                return
-            
-            # Send remaining audio in chunks
-            chunk_size = 8192
-            total_sent = 0
-            for i in range(0, len(audio_data), chunk_size):
-                chunk = audio_data[i:i + chunk_size]
-                try:
-                    self.connection.send(chunk)
-                    total_sent += len(chunk)
-                    self.logger.debug(f"Sent final chunk: {len(chunk)} bytes")
-                    time.sleep(0.01)
-                except Exception as send_error:
-                    self.logger.error(f"Error sending final chunk: {send_error}")
-                    print(f"❌ Error sending final audio chunk: {send_error}")
-                    break
-            print(f"✅ Sent {total_sent} bytes to Deepgram")
-            
-            # Append brief silence to help VAD finalize
-            try:
-                silence_ms = 400
-                bytes_per_sample = 2  # 16-bit linear16
-                silence_bytes = int(self.rate * (silence_ms / 1000.0)) * bytes_per_sample
-                self.connection.send(b"\x00" * silence_bytes)
-                self.logger.debug("Sent 400ms silence tail")
-            except Exception as e:
-                self.logger.error(f"Error sending silence tail: {e}")
-            
-            print("⏳ Waiting for response...")
-            
-            # Record when we finished sending for nudge mechanism
-            self.last_send_time = time.time()
-            self.nudge_sent = False
-            
-            timeout_start = time.time()
-            timeout = 30
-            while self.waiting_for_response and time.time() - timeout_start < timeout:
-                time.sleep(0.1)
-            if self.waiting_for_response:
-                print("⚠️ Response timeout - no response received from Deepgram")
-                self.waiting_for_response = False
-                self.logger.warning("Response timeout after 30 seconds")
-        except Exception as e:
-            self.logger.error(f"Failed to flush final segment: {e}")
-            print(f"❌ Failed to flush final segment: {e}")
-            self.waiting_for_response = False
     
     def stop_recording(self):
         """Stop recording and send audio to Deepgram."""
@@ -632,15 +510,8 @@ Please conduct the interview according to the plan while maintaining natural con
                 # Small delay to prevent rapid TAB presses
                 time.sleep(0.1)
                 
-                if self.progressive_streaming_enabled:
-                    # Stop progressive sender and flush remaining bytes with finalization
-                    self.segment_running = False
-                    if self.segment_sender_thread and self.segment_sender_thread.is_alive():
-                        self.segment_sender_thread.join(timeout=0.5)
-                    threading.Thread(target=self._flush_final_segment_and_wait, daemon=True).start()
-                else:
-                    # Fallback to single-shot send
-                    threading.Thread(target=self._send_audio_sync, daemon=True).start()
+                # Send audio to Deepgram
+                threading.Thread(target=self._send_audio_sync, daemon=True).start()
     
     def _send_audio_sync(self):
         """Synchronous version of sending audio to Deepgram."""
@@ -695,10 +566,6 @@ Please conduct the interview according to the plan while maintaining natural con
             
             print("⏳ Waiting for response...")
             
-            # Record when we finished sending for nudge mechanism
-            self.last_send_time = time.time()
-            self.nudge_sent = False
-            
             # Add a timeout mechanism (wait max 30 seconds for response)
             timeout_start = time.time()
             timeout = 30  # seconds
@@ -718,36 +585,6 @@ Please conduct the interview according to the plan while maintaining natural con
             import traceback
             traceback.print_exc()
     
-    async def _send_audio_to_deepgram(self):
-        """Send recorded audio to Deepgram Voice Agent (async version)."""
-        if not self.is_connected or not self.connection:
-            print("❌ Not connected to Deepgram")
-            return
-        
-        try:
-            self.waiting_for_response = True
-            print("📤 Sending audio to Deepgram...")
-            
-            # Convert frames to bytes
-            audio_data = b''.join(self.recording_frames)
-            
-            # Send audio in chunks (similar to sample code)
-            chunk_size = 8192
-            total_sent = 0
-            
-            for i in range(0, len(audio_data), chunk_size):
-                chunk = audio_data[i:i + chunk_size]
-                self.connection.send(chunk)
-                total_sent += len(chunk)
-            
-            print(f"✅ Sent {total_sent} bytes to Deepgram")
-            print("⏳ Waiting for response...")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to send audio: {e}")
-            print(f"❌ Failed to send audio: {e}")
-            self.waiting_for_response = False
-    
     def _audio_output_worker(self):
         """Worker thread for audio output."""
         while self.is_connected:
@@ -763,43 +600,6 @@ Please conduct the interview according to the plan while maintaining natural con
                 continue
             except Exception as e:
                 self.logger.error(f"Audio output error: {e}")
-    
-    def setup_keyboard_handlers(self):
-        """Set up TAB key handlers for recording."""
-        keyboard.on_press_key('tab', lambda e: self.start_recording())
-        keyboard.on_release_key('tab', lambda e: self.stop_recording())
-        print("🎮 Keyboard handlers set - Hold TAB to record")
-    
-    def disconnect(self):
-        """Disconnect from Deepgram Voice Agent."""
-        try:
-            self.is_connected = False
-            
-            # Stop recording if active
-            if self.is_recording:
-                self.stop_recording()
-            
-            # Close streams
-            if self.recording_stream:
-                self.recording_stream.close()
-            
-            if self.output_stream:
-                self.output_stream.close()
-            
-            # Disconnect from Deepgram
-            if self.connection:
-                self.connection.finish()
-                self.connection = None
-            
-            # Calculate connection time
-            if hasattr(self, 'connection_start_time'):
-                self.stats["connection_time"] = time.time() - self.connection_start_time
-            
-            self.logger.info("Disconnected from Deepgram Voice Agent")
-            self.logger.info(f"Session stats: {self.stats}")
-            
-        except Exception as e:
-            self.logger.error(f"Error during disconnect: {e}")
     
     def get_conversation_history(self) -> list:
         """
@@ -833,15 +633,3 @@ Please conduct the interview according to the plan while maintaining natural con
             
         except Exception as e:
             self.logger.error(f"Failed to save conversation: {e}")
-    
-    def update_interview_context(self, interview_conductor, interview_plan):
-        """
-        Update the interview context dynamically.
-        
-        Args:
-            interview_conductor: Interview conductor agent
-            interview_plan: Interview plan
-        """
-        self.interview_conductor = interview_conductor
-        self.interview_plan = interview_plan
-        self.logger.info("Interview context updated")
