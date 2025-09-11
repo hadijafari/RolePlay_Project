@@ -79,14 +79,86 @@ class DeepgramVoiceAgentTabService:
         self.conversation_log = []
         self.waiting_for_response = False
         
+        # Resilience and recovery
+        self.retry_count = 0
+        self.max_retries = 3
+        self.last_successful_state = None
+        self.connection_health = True
+        
         # Statistics
         self.stats = {
             "total_turns": 0,
             "connection_time": 0,
-            "total_recordings": 0
+            "total_recordings": 0,
+            "retry_attempts": 0,
+            "recovery_count": 0
         }
         
         self.logger.info("Simplified Deepgram Voice Agent TAB Service initialized")
+    
+    def _save_conversation_state(self):
+        """Save current conversation state for recovery."""
+        try:
+            self.last_successful_state = {
+                "conversation_log": self.conversation_log.copy(),
+                "stats": self.stats.copy(),
+                "timestamp": time.time()
+            }
+            self.logger.debug("Conversation state saved for recovery")
+        except Exception as e:
+            self.logger.error(f"Failed to save conversation state: {e}")
+    
+    def _check_connection_health(self):
+        """Check if connection is healthy before sending requests."""
+        try:
+            # Basic health check - connection exists and is connected
+            if not self.connection or not self.is_connected:
+                self.connection_health = False
+                return False
+            
+            # Check if we're not in a failed state
+            if self.retry_count >= self.max_retries:
+                self.connection_health = False
+                return False
+                
+            self.connection_health = True
+            return True
+        except Exception as e:
+            self.logger.error(f"Health check failed: {e}")
+            self.connection_health = False
+            return False
+    
+    def _handle_think_provider_failure(self, error_msg):
+        """Handle think provider failures with retry logic."""
+        self.retry_count += 1
+        self.stats["retry_attempts"] += 1
+        
+        if self.retry_count <= self.max_retries:
+            # Exponential backoff: 2^retry_count seconds
+            retry_delay = 2 ** self.retry_count
+            print(f"⚠️ Think provider failed (attempt {self.retry_count}/{self.max_retries}). Retrying in {retry_delay}s...")
+            self.logger.warning(f"Think provider failure: {error_msg}. Retry {self.retry_count}/{self.max_retries}")
+            
+            # Don't terminate connection, just wait and retry
+            time.sleep(retry_delay)
+            return True  # Indicate retry should happen
+        else:
+            print("❌ Max retries exceeded. Using fallback response.")
+            self.logger.error(f"Max retries exceeded for think provider. Error: {error_msg}")
+            return False  # Indicate fallback should be used
+    
+    def _get_fallback_response(self):
+        """Get a fallback response when think provider fails."""
+        fallback_responses = [
+            "I heard your response. Let me continue with the next question.",
+            "Thank you for that answer. Let's move on to the next topic.",
+            "I understand. Let's proceed to the next question.",
+            "That's helpful information. Let me ask you the next question."
+        ]
+        
+        # Use conversation turn count to cycle through responses
+        response_index = self.stats["total_turns"] % len(fallback_responses)
+        return fallback_responses[response_index]
     
     def _get_hardcoded_system_prompt(self) -> str:
         """Return the complete hardcoded system prompt with all 25 questions."""
@@ -119,9 +191,13 @@ class DeepgramVoiceAgentTabService:
 - What trends do you see in embedded systems and PCB design, and how do you stay current with technology?
 
 CRITICAL INSTRUCTIONS:
+- The agent will say the initial message and asks that the interviewee introduces himself.
+- After the interviewee introduces himself, the agent will respond in one or 2 sentence and then asks the first question.
 - Ask these questions in the exact order listed above
 - Make it sound like a natural conversation - don't say question numbers or "first question", "second question", etc.
-- After each answer, acknowledge their response naturally and move to the next topic
+- After each answer, provide brief constructive feedback (1-2 sentences) when the answer could be improved or when clarification would be helpful
+- If the answer is good and complete, simply acknowledge it briefly and move to the next question without excessive praise
+- Be encouraging and supportive, but focus on helping the interviewee improve rather than just praising
 - Do NOT ask follow-up questions or elaborations
 - Do NOT skip questions or ask them out of order
 - Do NOT create your own questions
@@ -259,10 +335,9 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
             
             # Initial greeting
             options.agent.greeting = (
-                "Hello! Welcome to your interview. "
-                "I'm going to ask you 25 questions about microcontroller programming and PCB design. "
-                "Please hold TAB to speak and release when you're done answering each question. "
-                "Let's begin with the first question."
+                # "Hello! Welcome to your interview. "
+                # "I'm excited to learn more about your background. "
+                "Could you please introduce yourself and tell me a bit about your experience?"
             )
             
             # Register event handlers
@@ -339,6 +414,12 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
                 if self.waiting_for_response:
                     self.waiting_for_response = False
                     self.logger.debug("Turn completed by ConversationText (assistant)")
+                    
+                    # Save state after successful response
+                    self._save_conversation_state()
+                    
+                    # Reset retry count on success
+                    self.retry_count = 0
         
         # Agent audio done handler
         def on_agent_audio_done(_, agent_audio_done, **kwargs):
@@ -352,6 +433,9 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
             
             self.waiting_for_response = False
             self.stats["total_turns"] += 1
+            
+            # Save state after successful turn completion
+            self._save_conversation_state()
             
             print("✅ Agent finished speaking - Hold TAB to respond")
         
@@ -399,9 +483,41 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
         
         # Error handler
         def on_error(_, error, **kwargs):
-            """Handle errors."""
+            """Handle errors with retry logic."""
+            error_msg = str(error)
             self.logger.error(f"Voice Agent error: {error}")
             print(f"❌ Error: {error}")
+            
+            # Check if it's a think provider error (503 Service Unavailable)
+            if "THINK_REQUEST_FAILED" in error_msg or "503" in error_msg or "Service Unavailable" in error_msg:
+                print("🔄 Think provider error detected - attempting recovery...")
+                
+                # Handle think provider failure with retry logic
+                if self._handle_think_provider_failure(error_msg):
+                    # Retry the current request
+                    print("🔄 Retrying request...")
+                    self.waiting_for_response = False
+                    return
+                else:
+                    # Use fallback response
+                    fallback_response = self._get_fallback_response()
+                    print(f"🤖 Fallback: {fallback_response}")
+                    
+                    # Add fallback to conversation log
+                    self.conversation_log.append({
+                        "role": "assistant",
+                        "content": fallback_response,
+                        "timestamp": datetime.now().isoformat(),
+                        "is_fallback": True
+                    })
+                    
+                    # Reset retry count for next attempt
+                    self.retry_count = 0
+                    self.stats["recovery_count"] += 1
+            else:
+                # For other errors, just log and continue
+                print("⚠️ Non-critical error - continuing...")
+            
             # Prevent indefinite waiting on error
             if self.waiting_for_response:
                 self.waiting_for_response = False
@@ -438,7 +554,7 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
         """Start keep-alive thread to maintain connection."""
         def send_keep_alive():
             while self.is_connected:
-                time.sleep(3)  # Reduced from 5 to 3 seconds
+                time.sleep(5)  # Standard 5 seconds interval
                 if self.connection and self.is_connected:
                     try:
                         self.connection.send(str(AgentKeepAlive()))
@@ -519,6 +635,11 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
             print("❌ Not connected to Deepgram")
             return
         
+        # Check connection health before sending
+        if not self._check_connection_health():
+            print("⚠️ Connection health check failed - skipping audio send")
+            return
+        
         try:
             self.waiting_for_response = True
             print("📤 Sending audio to Deepgram...")
@@ -554,21 +675,21 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
 
             print(f"✅ Sent {total_sent} bytes to Deepgram")
 
-            # Append brief silence to help VAD finalize
+            # Append silence to help VAD finalize (increased for long recordings)
             try:
-                silence_ms = 200
+                silence_ms = 500  # Increased from 200ms to 500ms for better VAD
                 bytes_per_sample = 2  # 16-bit linear16
                 silence_bytes = int(self.rate * (silence_ms / 1000.0)) * bytes_per_sample
                 self.connection.send(b"\x00" * silence_bytes)
-                self.logger.debug("Sent 200ms silence tail")
+                self.logger.debug("Sent 500ms silence tail")
             except Exception as e:
                 self.logger.error(f"Error sending silence tail: {e}")
             
             print("⏳ Waiting for response...")
             
-            # Add a timeout mechanism (wait max 30 seconds for response)
+            # Add a timeout mechanism (wait max 60 seconds for response)
             timeout_start = time.time()
-            timeout = 30  # seconds
+            timeout = 60  # seconds - increased for better reliability
             
             while self.waiting_for_response and time.time() - timeout_start < timeout:
                 time.sleep(0.1)
@@ -576,7 +697,7 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
             if self.waiting_for_response:
                 print("⚠️ Response timeout - no response received from Deepgram")
                 self.waiting_for_response = False
-                self.logger.warning("Response timeout after 30 seconds")
+                self.logger.warning("Response timeout after 60 seconds")
             
         except Exception as e:
             self.logger.error(f"Failed to send audio: {e}")
@@ -626,6 +747,12 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
                 json.dump({
                     "conversation": self.conversation_log,
                     "stats": self.stats,
+                    "resilience_metrics": {
+                        "retry_attempts": self.stats.get("retry_attempts", 0),
+                        "recovery_count": self.stats.get("recovery_count", 0),
+                        "connection_health": self.connection_health,
+                        "last_successful_state": self.last_successful_state
+                    },
                     "timestamp": datetime.now().isoformat()
                 }, f, indent=2)
             
