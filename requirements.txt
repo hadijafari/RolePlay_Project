@@ -18,6 +18,12 @@ python-dotenv>=1.0.0
 # Deepgram Voice Agent API for real-time conversation
 deepgram-sdk>=3.0.0  # Real-time STT/TTS with Voice Agent
 
+# ===== FASTAPI AND WEB FRAMEWORK =====
+# FastAPI framework for API development
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0  # ASGI server for FastAPI
+python-multipart>=0.0.6  # For file uploads
+
 # Text-to-Speech functionality (fallback mode)
 elevenlabs>=0.2.26
 pygame>=2.5.0  # For audio playback
