@@ -330,8 +330,8 @@ class ConversationLogger:
 class CustomDeepgramVoiceAgentTabService(DeepgramVoiceAgentTabService):
     """Custom voice agent that uses dynamic questions from interview plan and provides feedback."""
     
-    def __init__(self, questions=None, feedback_agent=None, conversation_logger=None):
-        super().__init__()
+    def __init__(self, questions=None, feedback_agent=None, conversation_logger=None, enable_audio_recording=True):
+        super().__init__(enable_audio_recording=enable_audio_recording)
         self.dynamic_questions = questions or []
         self.feedback_agent = feedback_agent
         self.conversation_logger = conversation_logger
@@ -683,7 +683,8 @@ async def main():
     voice_agent = CustomDeepgramVoiceAgentTabService(
         questions=questions,
         feedback_agent=feedback_agent,
-        conversation_logger=conversation_logger
+        conversation_logger=conversation_logger,
+        enable_audio_recording=True  # Enable complete interview audio recording
     )
     
     try:
@@ -695,7 +696,9 @@ async def main():
             print("🎤 INTERVIEW READY")
             print("📝 Hold TAB to speak, release to send")
             print("📊 Feedback will be generated for each Q&A pair")
+            print("🎵 Complete interview audio recording: ENABLED")
             print(f"📁 Conversation log: {log_file_path}")
+            print(f"💾 Audio will be saved to: {rag_dir}")
             print("❌ Press Ctrl+C to exit")
             print("="*60)
             
@@ -712,8 +715,10 @@ async def main():
         print(f"❌ Error during interview: {e}")
         print(f"📁 Conversation log saved: {log_file_path}")
     finally:
-        await voice_agent.disconnect()
+        # Disconnect with the RAG directory for audio export
+        await voice_agent.disconnect(output_dir=str(rag_dir))
         print(f"📁 Final conversation log: {log_file_path}")
+        print(f"🎵 Complete interview audio saved to RAG directory")
 
 
 if __name__ == "__main__":

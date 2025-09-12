@@ -28,9 +28,10 @@ try:
     import pyaudio
     import keyboard
     from dotenv import load_dotenv
+    from .audio_recording_manager import AudioRecordingManager
 except ImportError as e:
     print(f"Deepgram Voice Agent Service: Missing required dependency: {e}")
-    print("Please install dependencies: pip install deepgram-sdk pyaudio keyboard python-dotenv")
+    print("Please install dependencies: pip install deepgram-sdk pyaudio keyboard python-dotenv pydub numpy")
     sys.exit(1)
 
 # Load environment variables
@@ -43,7 +44,7 @@ class DeepgramVoiceAgentTabService:
     Simplified service for managing voice conversations using Deepgram Voice Agent with TAB key recording.
     """
     
-    def __init__(self):
+    def __init__(self, enable_audio_recording: bool = True):
         self.logger = self._setup_logger()
         
         # API Configuration
@@ -84,6 +85,25 @@ class DeepgramVoiceAgentTabService:
         self.max_retries = 3
         self.last_successful_state = None
         self.connection_health = True
+        
+        # Audio recording for complete interview session
+        self.enable_audio_recording = enable_audio_recording
+        self.audio_recording_manager = None
+        self.interviewer_audio_buffer = bytearray()  # Buffer for interviewer audio chunks
+        self.interviewer_speech_start_time = None   # Track when interviewer starts speaking
+        
+        if self.enable_audio_recording:
+            try:
+                self.audio_recording_manager = AudioRecordingManager(
+                    sample_rate=self.rate,
+                    channels=self.channels,
+                    sample_width=2  # 16-bit = 2 bytes
+                )
+                self.logger.info("Audio recording manager initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize audio recording manager: {e}")
+                self.enable_audio_recording = False
+                self.audio_recording_manager = None
         
         # Statistics
         self.stats = {
@@ -234,11 +254,59 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             except:
                 pass
     
-    async def disconnect(self):
+    async def disconnect(self, output_dir: Optional[str] = None):
         """Disconnect from Deepgram and clean up resources."""
         print("🔌 Disconnecting from Deepgram...")
         
         self.is_connected = False
+        
+        # Export recorded audio before disconnecting
+        if self.audio_recording_manager:
+            try:
+                self.audio_recording_manager.stop_session()
+                
+                # Generate output path if not provided
+                if not output_dir:
+                    # Default to RAG directory
+                    current_dir = Path(__file__).parent.parent
+                    rag_dir = current_dir / "RAG"
+                    rag_dir.mkdir(exist_ok=True)
+                    output_dir = str(rag_dir)
+                
+                # Create timestamped filename
+                output_path = self.audio_recording_manager.create_timestamped_filename(
+                    output_dir, "interview_recording"
+                )
+                
+                print(f"💾 Exporting complete interview audio to: {output_path}")
+                
+                # Export to MP3
+                success = self.audio_recording_manager.export_to_mp3(output_path)
+                if success:
+                    print(f"✅ Interview audio exported successfully: {output_path}")
+                    
+                    # Show session stats
+                    stats = self.audio_recording_manager.get_session_stats()
+                    print(f"📊 Recording stats:")
+                    print(f"   Total segments: {stats['total_segments']}")
+                    print(f"   Interviewer segments: {stats['interviewer_segments']}")
+                    print(f"   Interviewee segments: {stats['interviewee_segments']}")
+                    print(f"   Estimated duration: {stats['estimated_duration_seconds']:.1f} seconds")
+                else:
+                    print("❌ Failed to export interview audio")
+                    # Try WAV export as fallback
+                    wav_path = output_path.replace(".mp3", ".wav")
+                    print(f"🔄 Attempting WAV export as fallback: {wav_path}")
+                    success_wav = self.audio_recording_manager.export_to_wav(wav_path)
+                    if success_wav:
+                        print(f"✅ Interview audio exported as WAV: {wav_path}")
+                
+                # Clear the recording session
+                self.audio_recording_manager.clear_session()
+                
+            except Exception as e:
+                self.logger.error(f"Error exporting recorded audio: {e}")
+                print(f"❌ Error exporting recorded audio: {e}")
         
         # Close connection
         if self.connection:
@@ -357,6 +425,11 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             self.connection_start_time = time.time()
             print("✅ DEEPGRAM CONNECTION ESTABLISHED")
             
+            # Start audio recording session if enabled
+            if self.audio_recording_manager:
+                self.audio_recording_manager.start_session()
+                self.logger.info("Audio recording session started")
+            
             # Start keep-alive thread
             self._start_keep_alive()
             
@@ -389,6 +462,11 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
         def on_audio_data(_, data, **kwargs):
             """Handle incoming audio data from agent."""
             self.audio_buffer.extend(data)
+            
+            # Buffer interviewer audio chunks for complete speech segments
+            if self.audio_recording_manager and self.interviewer_speech_start_time is not None:
+                self.interviewer_audio_buffer.extend(data)
+                self.logger.debug(f"Buffered interviewer audio chunk: {len(data)} bytes, total buffer: {len(self.interviewer_audio_buffer)} bytes")
             
             # Queue audio for playback
             if len(self.audio_buffer) >= self.chunk_size * 2:
@@ -426,6 +504,19 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             """Handle when agent finishes speaking."""
             print(f"\n🎯 AGENT_AUDIO_DONE EVENT TRIGGERED!")
             
+            # Process complete interviewer audio segment
+            if self.audio_recording_manager and self.interviewer_speech_start_time is not None:
+                if len(self.interviewer_audio_buffer) > 0:
+                    # Add the complete interviewer audio segment
+                    self.audio_recording_manager.add_interviewer_audio(bytes(self.interviewer_audio_buffer))
+                    self.logger.info(f"Added complete interviewer audio segment: {len(self.interviewer_audio_buffer)} bytes")
+                    print(f"🎵 Recorded interviewer audio: {len(self.interviewer_audio_buffer)} bytes")
+                
+                # Reset for next speech segment
+                self.interviewer_audio_buffer = bytearray()
+                self.interviewer_speech_start_time = None
+                self.logger.debug("Reset interviewer audio buffer")
+            
             # Flush remaining audio buffer
             if len(self.audio_buffer) > 0:
                 self.audio_output_queue.put(bytes(self.audio_buffer))
@@ -462,6 +553,12 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             """Handle when agent starts speaking."""
             self.audio_buffer = bytearray()  # Reset buffer for new response
             
+            # Start buffering interviewer audio
+            if self.audio_recording_manager:
+                self.interviewer_audio_buffer = bytearray()
+                self.interviewer_speech_start_time = time.time()
+                self.logger.debug("Started buffering interviewer audio")
+            
             print("🎤 Agent is speaking...")
             self.logger.info(f"Agent started speaking event: {agent_started_speaking}")
             # Release wait as soon as agent begins speaking
@@ -480,6 +577,12 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             """Handle settings confirmation."""
             self.logger.info("Settings applied successfully")
             print("🟢 Agent is ready for conversation")
+            
+            # Initialize interviewer audio buffering for the greeting
+            if self.audio_recording_manager:
+                self.interviewer_audio_buffer = bytearray()
+                self.interviewer_speech_start_time = time.time()
+                self.logger.debug("Initialized interviewer audio buffering for greeting")
         
         # Error handler
         def on_error(_, error, **kwargs):
@@ -622,6 +725,10 @@ You are a friendly, professional interviewer conducting a comprehensive intervie
             if self.recording_frames:
                 print(f"⏹️ Recording stopped - {len(self.recording_frames)} chunks recorded")
                 self.stats["total_recordings"] += 1
+                
+                # Record interviewee audio if recording is enabled
+                if self.audio_recording_manager:
+                    self.audio_recording_manager.add_interviewee_audio(self.recording_frames.copy())
                 
                 # Small delay to prevent rapid TAB presses
                 time.sleep(0.1)

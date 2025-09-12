@@ -5,6 +5,7 @@
 # Audio recording and processing
 pyaudio>=0.2.11
 pydub>=0.25.1  # For MP3 encoding and audio processing
+numpy>=1.21.0  # For audio data processing and manipulation
 
 # Keyboard input handling
 keyboard>=0.13.5
