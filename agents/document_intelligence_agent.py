@@ -22,7 +22,9 @@ try:
     from services.document_intelligence_service import DocumentIntelligenceService, DocumentParsingError
     from models.interview_models import (
         ResumeAnalysis, JobDescriptionAnalysis, CandidateMatch, 
-        InterviewPlan, ProcessingResult, DocumentType
+        InterviewPlan, ProcessingResult, DocumentType,
+        SimplifiedResumeAnalysis, SimplifiedPersonalInfo, SimplifiedTechnicalSkill,
+        SimplifiedWorkExperience, SimplifiedEducation
     )
 except ImportError as e:
     print(f"Document Intelligence Agent: Missing required modules: {e}")
@@ -699,6 +701,180 @@ KEY FINDINGS:
         self.processing_history.clear()
         
         self.logger.info("Analysis data cleared")
+    
+    def convert_to_simplified_resume_analysis(self, resume_analysis: ResumeAnalysis) -> SimplifiedResumeAnalysis:
+        """Convert a complex ResumeAnalysis to a SimplifiedResumeAnalysis."""
+        try:
+            # Convert personal info
+            simplified_personal_info = SimplifiedPersonalInfo(
+                full_name=resume_analysis.personal_info.full_name,
+                email=resume_analysis.personal_info.email,
+                location=resume_analysis.personal_info.location
+            )
+            
+            # Convert technical skills (keep only top skills)
+            simplified_technical_skills = []
+            for skill in resume_analysis.technical_skills[:10]:  # Limit to top 10 skills
+                simplified_skill = SimplifiedTechnicalSkill(
+                    skill_name=skill.skill_name,
+                    proficiency_level=skill.proficiency_level,
+                    years_experience=skill.years_experience
+                )
+                simplified_technical_skills.append(simplified_skill)
+            
+            # Convert work experience (keep only key achievements)
+            simplified_work_experience = []
+            for exp in resume_analysis.work_experience:
+                simplified_exp = SimplifiedWorkExperience(
+                    job_title=exp.job_title,
+                    company_name=exp.company_name,
+                    duration=exp.duration,
+                    key_achievements=exp.achievements[:3]  # Keep only top 3 achievements
+                )
+                simplified_work_experience.append(simplified_exp)
+            
+            # Convert education (keep only highest degree)
+            highest_education = resume_analysis.education[0] if resume_analysis.education else None
+            simplified_education = SimplifiedEducation(
+                degree=f"{highest_education.degree} {highest_education.major}" if highest_education else "Not specified",
+                institution=highest_education.institution if highest_education else "Not specified",
+                graduation_year=highest_education.graduation_year if highest_education else None
+            )
+            
+            # Get total experience years
+            total_experience = resume_analysis.career_progression.total_experience_years if resume_analysis.career_progression else 0.0
+            
+            # Create simplified resume analysis
+            simplified_resume = SimplifiedResumeAnalysis(
+                personal_info=simplified_personal_info,
+                technical_skills=simplified_technical_skills,
+                work_experience=simplified_work_experience,
+                education=simplified_education,
+                total_experience_years=total_experience,
+                key_strengths=resume_analysis.strengths[:5]  # Keep only top 5 strengths
+            )
+            
+            return simplified_resume
+            
+        except Exception as e:
+            self.logger.error(f"Failed to convert resume analysis to simplified format: {e}")
+            raise
+    
+    async def analyze_resume_simplified(self, 
+                                      file_path: str,
+                                      additional_context: Optional[Dict[str, Any]] = None) -> AgentResponse:
+        """
+        Analyze resume file and provide simplified structured insights.
+        
+        Args:
+            file_path: Path to resume file
+            additional_context: Additional context for analysis
+            
+        Returns:
+            AgentResponse with simplified resume analysis results
+        """
+        try:
+            self.logger.info(f"Starting simplified resume analysis: {Path(file_path).name}")
+            
+            # First get the full analysis
+            full_analysis_result = await self.analyze_resume(file_path, additional_context)
+            
+            if not full_analysis_result.success:
+                return full_analysis_result
+            
+            # Extract the full resume analysis
+            if hasattr(full_analysis_result, 'metadata') and 'resume_analysis' in full_analysis_result.metadata:
+                resume_data = full_analysis_result.metadata['resume_analysis']
+            elif hasattr(full_analysis_result, 'data'):
+                resume_data = full_analysis_result.data
+            else:
+                return AgentResponse(
+                    success=False,
+                    content="Resume analysis data not found",
+                    agent_name=self.config.name,
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=0.0,
+                    error="Data extraction failed"
+                )
+            
+            # Create ResumeAnalysis object
+            clean_data = resume_data.copy()
+            if 'analysis_timestamp' in clean_data:
+                del clean_data['analysis_timestamp']
+            
+            full_resume_analysis = ResumeAnalysis(**clean_data)
+            
+            # Convert to simplified format
+            simplified_resume = self.convert_to_simplified_resume_analysis(full_resume_analysis)
+            
+            # Generate simplified summary
+            simplified_summary = self._generate_simplified_resume_summary(simplified_resume)
+            
+            # Create response
+            return AgentResponse(
+                success=True,
+                content=simplified_summary,
+                agent_name=self.config.name,
+                timestamp=datetime.now().isoformat(),
+                processing_time=full_analysis_result.processing_time,
+                metadata={
+                    "resume_analysis": simplified_resume.dict(),
+                    "analysis_type": "simplified",
+                    "original_analysis_available": True
+                }
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Simplified resume analysis failed: {e}")
+            return AgentResponse(
+                success=False,
+                content=f"Simplified resume analysis failed: {str(e)}",
+                agent_name=self.config.name,
+                timestamp=datetime.now().isoformat(),
+                processing_time=0.0,
+                error=str(e)
+            )
+    
+    def _generate_simplified_resume_summary(self, resume: SimplifiedResumeAnalysis) -> str:
+        """Generate a simplified human-readable resume summary."""
+        summary_parts = []
+        
+        # Personal info
+        summary_parts.append(f"CANDIDATE: {resume.personal_info.full_name}")
+        summary_parts.append(f"LOCATION: {resume.personal_info.location}")
+        summary_parts.append(f"EXPERIENCE: {resume.total_experience_years} years")
+        summary_parts.append("")
+        
+        # Technical skills
+        summary_parts.append("TECHNICAL SKILLS:")
+        for skill in resume.technical_skills:
+            level = skill.proficiency_level.value if skill.proficiency_level else "Unknown"
+            years = f" ({skill.years_experience} years)" if skill.years_experience else ""
+            summary_parts.append(f"- {skill.skill_name}: {level}{years}")
+        summary_parts.append("")
+        
+        # Work experience
+        summary_parts.append("WORK EXPERIENCE:")
+        for exp in resume.work_experience:
+            summary_parts.append(f"{exp.job_title} at {exp.company_name} ({exp.duration})")
+            for achievement in exp.key_achievements:
+                summary_parts.append(f"  • {achievement}")
+        summary_parts.append("")
+        
+        # Education
+        summary_parts.append("EDUCATION:")
+        summary_parts.append(f"{resume.education.degree} from {resume.education.institution}")
+        if resume.education.graduation_year:
+            summary_parts.append(f"Graduated: {resume.education.graduation_year}")
+        summary_parts.append("")
+        
+        # Key strengths
+        if resume.key_strengths:
+            summary_parts.append("KEY STRENGTHS:")
+            for strength in resume.key_strengths:
+                summary_parts.append(f"- {strength}")
+        
+        return "\n".join(summary_parts)
 
 
 # Convenience functions

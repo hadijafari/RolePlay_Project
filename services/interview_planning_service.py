@@ -30,7 +30,8 @@ try:
     from models.interview_models import (
         ResumeAnalysis, JobDescriptionAnalysis, CandidateMatch,
         InterviewPlan, InterviewSection, Question, InterviewPhase, QuestionType,
-        ProcessingResult
+        ProcessingResult, SimplifiedInterviewPlan, SimplifiedInterviewSection, SimplifiedQuestion,
+        SimplifiedResumeAnalysis
     )
 except ImportError as e:
     print(f"Interview Planning Service: Missing models: {e}")
@@ -862,6 +863,534 @@ Format as JSON array with objects containing: question_text, question_type (one 
             "question_frameworks_available": len(self.question_frameworks),
             "service_status": "active"
         }
+    
+    async def generate_simplified_interview_plan_from_simplified_resume(self,
+                                                                      simplified_resume_analysis: SimplifiedResumeAnalysis,
+                                                                      job_analysis: JobDescriptionAnalysis,
+                                                                      candidate_match: Optional[CandidateMatch] = None,
+                                                                      interview_duration: int = None,
+                                                                      custom_requirements: Optional[Dict[str, Any]] = None) -> ProcessingResult:
+        """
+        Generate a simplified interview plan based on simplified resume analysis.
+        
+        Args:
+            simplified_resume_analysis: Simplified resume analysis
+            job_analysis: Structured job description analysis  
+            candidate_match: Candidate-job matching analysis
+            interview_duration: Total interview duration in minutes
+            custom_requirements: Additional custom requirements
+            
+        Returns:
+            ProcessingResult with simplified interview plan
+        """
+        
+        start_time = time.time()
+        self.stats["plans_generated"] += 1
+        
+        try:
+            self.logger.info("Starting simplified interview plan generation from simplified resume")
+            
+            # Set default duration
+            duration = interview_duration or self.config.DEFAULT_INTERVIEW_DURATION
+            
+            # Generate interview strategy using simplified data
+            interview_strategy = await self._generate_interview_strategy_from_simplified_resume(
+                simplified_resume_analysis, job_analysis, candidate_match, custom_requirements
+            )
+            
+            # Create interview sections (six-part structure; durations informational only)
+            interview_sections = await self._create_interview_sections_from_simplified_resume(
+                interview_strategy, simplified_resume_analysis, job_analysis, duration
+            )
+            
+            # Generate detailed questions for each section with de-duplication across sections
+            previous_q_texts: List[str] = []
+            for section in interview_sections:
+                await self._generate_section_questions_from_simplified_resume(
+                    section, interview_strategy, simplified_resume_analysis, job_analysis, previous_q_texts
+                )
+                previous_q_texts.extend([q.question_text for q in section.questions])
+            
+            # Create complete simplified interview plan
+            interview_plan = SimplifiedInterviewPlan(
+                candidate_match=candidate_match,
+                interview_sections=interview_sections,
+                total_estimated_duration_minutes=duration
+            )
+            
+            # Calculate statistics
+            total_questions = sum(len(section.questions) for section in interview_sections)
+            self.stats["custom_questions_generated"] += total_questions
+            
+            # Update processing statistics
+            processing_time = time.time() - start_time
+            self.stats["total_processing_time"] += processing_time
+            self.stats["successful_generations"] += 1
+            self._update_average_questions()
+            
+            self.logger.info(f"Simplified interview plan generated successfully in {processing_time:.2f}s")
+            self.logger.info(f"Plan contains {len(interview_sections)} sections with {total_questions} questions")
+            
+            return ProcessingResult(
+                success=True,
+                result_data=interview_plan.dict(),
+                processing_time_seconds=processing_time,
+                confidence_score=0.8,  # Slightly lower confidence due to simplified data
+                metadata={
+                    "total_sections": len(interview_sections),
+                    "total_questions": total_questions,
+                    "interview_duration": duration,
+                    "plan_type": "simplified_from_simplified_resume"
+                }
+            )
+            
+        except Exception as e:
+            processing_time = time.time() - start_time
+            self.stats["failed_generations"] += 1
+            self.logger.error(f"Simplified interview plan generation failed after {processing_time:.2f}s: {e}")
+            
+            return ProcessingResult(
+                success=False,
+                error_message=str(e),
+                processing_time_seconds=processing_time
+            )
+
+    async def generate_simplified_interview_plan(self,
+                                               resume_analysis: ResumeAnalysis,
+                                               job_analysis: JobDescriptionAnalysis,
+                                               candidate_match: Optional[CandidateMatch] = None,
+                                               interview_duration: int = None,
+                                               custom_requirements: Optional[Dict[str, Any]] = None) -> ProcessingResult:
+        """
+        Generate a simplified interview plan based on document analysis.
+        
+        Args:
+            resume_analysis: Structured resume analysis
+            job_analysis: Structured job description analysis  
+            candidate_match: Candidate-job matching analysis
+            interview_duration: Total interview duration in minutes
+            custom_requirements: Additional custom requirements
+            
+        Returns:
+            ProcessingResult with simplified interview plan
+        """
+        
+        start_time = time.time()
+        self.stats["plans_generated"] += 1
+        
+        try:
+            self.logger.info("Starting simplified interview plan generation")
+            
+            # Generate the complex interview plan first
+            complex_plan_result = await self.generate_interview_plan(
+                resume_analysis, job_analysis, candidate_match, interview_duration, custom_requirements
+            )
+            
+            if not complex_plan_result.success:
+                return complex_plan_result
+            
+            # Extract the complex plan
+            complex_plan_data = complex_plan_result.result_data
+            complex_plan = InterviewPlan(**complex_plan_data)
+            
+            # Convert to simplified plan
+            simplified_plan = self.convert_to_simplified_plan(complex_plan)
+            
+            # Calculate statistics
+            total_questions = sum(len(section.questions) for section in simplified_plan.interview_sections)
+            self.stats["custom_questions_generated"] += total_questions
+            
+            # Update processing statistics
+            processing_time = time.time() - start_time
+            self.stats["total_processing_time"] += processing_time
+            self.stats["successful_generations"] += 1
+            self._update_average_questions()
+            
+            self.logger.info(f"Simplified interview plan generated successfully in {processing_time:.2f}s")
+            self.logger.info(f"Plan contains {len(simplified_plan.interview_sections)} sections with {total_questions} questions")
+            
+            return ProcessingResult(
+                success=True,
+                result_data=simplified_plan.dict(),
+                processing_time_seconds=processing_time,
+                confidence_score=0.9,  # High confidence for structured generation
+                metadata={
+                    "total_sections": len(simplified_plan.interview_sections),
+                    "total_questions": total_questions,
+                    "interview_duration": simplified_plan.total_estimated_duration_minutes,
+                    "plan_type": "simplified"
+                }
+            )
+            
+        except Exception as e:
+            processing_time = time.time() - start_time
+            self.stats["failed_generations"] += 1
+            self.logger.error(f"Simplified interview plan generation failed after {processing_time:.2f}s: {e}")
+            
+            return ProcessingResult(
+                success=False,
+                error_message=str(e),
+                processing_time_seconds=processing_time
+            )
+
+    def convert_to_simplified_plan(self, interview_plan: InterviewPlan) -> SimplifiedInterviewPlan:
+        """Convert a complex InterviewPlan to a SimplifiedInterviewPlan."""
+        try:
+            # Convert interview sections
+            simplified_sections = []
+            for section in interview_plan.interview_sections:
+                # Convert questions
+                simplified_questions = []
+                for question in section.questions:
+                    simplified_question = SimplifiedQuestion(
+                        question_text=question.question_text
+                    )
+                    simplified_questions.append(simplified_question)
+                
+                # Create simplified section
+                simplified_section = SimplifiedInterviewSection(
+                    phase=section.phase,
+                    section_name=section.section_name,
+                    description=section.description,
+                    estimated_duration_minutes=section.estimated_duration_minutes,
+                    questions=simplified_questions
+                )
+                simplified_sections.append(simplified_section)
+            
+            # Create simplified interview plan
+            simplified_plan = SimplifiedInterviewPlan(
+                plan_id=interview_plan.plan_id,
+                created_timestamp=interview_plan.created_timestamp,
+                candidate_match=interview_plan.candidate_match,
+                interview_sections=simplified_sections,
+                total_estimated_duration_minutes=interview_plan.total_estimated_duration_minutes
+            )
+            
+            return simplified_plan
+            
+        except Exception as e:
+            self.logger.error(f"Failed to convert interview plan to simplified format: {e}")
+            raise
+    
+    async def _generate_interview_strategy_from_simplified_resume(self,
+                                                               simplified_resume_analysis: SimplifiedResumeAnalysis,
+                                                               job_analysis: JobDescriptionAnalysis,
+                                                               candidate_match: Optional[CandidateMatch],
+                                                               custom_requirements: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate interview strategy based on simplified resume analysis data."""
+        
+        # Build context for AI strategy generation
+        context_prompt = f"""CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+
+Based on the following simplified candidate and job analysis, generate an interview strategy:
+
+CANDIDATE BACKGROUND:
+- Technical Skills: {', '.join([skill.skill_name for skill in simplified_resume_analysis.technical_skills[:10]])}
+- Experience Level: {simplified_resume_analysis.total_experience_years} years
+- Key Strengths: {', '.join(simplified_resume_analysis.key_strengths[:5])}
+
+JOB REQUIREMENTS:
+- Position: {job_analysis.job_title}
+- Seniority: {job_analysis.role_seniority} {job_analysis.role_type}
+- Key Technical Requirements: {', '.join([req.requirement for req in job_analysis.technical_requirements[:5]])}
+- Critical Success Factors: {', '.join(job_analysis.critical_success_factors[:3])}
+
+MATCH ANALYSIS:
+{f'- Overall Match Score: {candidate_match.overall_match_score:.1%}' if candidate_match else '- Match analysis not available'}
+{f'- Strong Matches: {", ".join(candidate_match.strong_matches[:3])}' if candidate_match and candidate_match.strong_matches else ''}
+{f'- Skill Gaps: {", ".join(candidate_match.skill_gaps[:3])}' if candidate_match and candidate_match.skill_gaps else ''}
+
+Generate an interview strategy that includes:
+1. Primary interview objectives (3-5 key goals)
+2. Key focus areas to explore in depth
+3. Evaluation priorities for this specific candidate-role combination
+4. Potential red flags to watch for
+5. Areas that need clarification or deeper exploration
+6. Interviewer notes and recommendations
+7. Follow-up areas for future rounds
+
+Format as JSON with these keys: objectives, focus_areas, evaluation_priorities, red_flags, clarifications, interviewer_notes, follow_up_areas, strategy_type"""
+        
+        try:
+            response = await asyncio.to_thread(
+                self.client.chat.completions.create,
+                model=self.config.MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert interview strategist. Generate comprehensive interview strategies based on candidate and job analysis. CRITICAL: Use ONLY standard ASCII characters - no Unicode symbols, checkmarks, bullet points, or special characters. Use simple text formatting with regular quotes and apostrophes."},
+                    {"role": "user", "content": context_prompt}
+                ],
+                max_tokens=self.config.MAX_TOKENS,
+                temperature=self.config.TEMPERATURE
+            )
+            
+            # Parse strategy from response
+            strategy_content = response.choices[0].message.content
+            
+            try:
+                # Try to extract JSON from response
+                strategy_data = self._extract_json_from_response(strategy_content)
+            except:
+                # Fallback to basic strategy
+                strategy_data = self._create_fallback_strategy_from_simplified_resume(simplified_resume_analysis, job_analysis)
+            
+            return strategy_data
+            
+        except Exception as e:
+            self.logger.warning(f"AI strategy generation failed: {e}, using fallback")
+            return self._create_fallback_strategy_from_simplified_resume(simplified_resume_analysis, job_analysis)
+    
+    def _create_fallback_strategy_from_simplified_resume(self, simplified_resume_analysis: SimplifiedResumeAnalysis, job_analysis: JobDescriptionAnalysis) -> Dict[str, Any]:
+        """Create fallback strategy if AI generation fails."""
+        
+        return {
+            "objectives": [
+                "Assess technical competency for the role",
+                "Evaluate cultural fit and communication skills", 
+                "Validate experience claims from resume",
+                "Determine motivation and career goals"
+            ],
+            "focus_areas": [
+                skill.skill_name for skill in simplified_resume_analysis.technical_skills[:3]
+            ] + ["Problem-solving approach", "Team collaboration"],
+            "evaluation_priorities": [
+                "Technical depth in core skills",
+                "Experience relevance to role requirements",
+                "Communication and interpersonal skills"
+            ],
+            "red_flags": [
+                "Inconsistencies in experience timeline",
+                "Lack of depth in claimed skills",
+                "Poor communication or attitude"
+            ],
+            "clarifications": [
+                "Verify technical skill proficiency levels",
+                "Understand reasons for job changes",
+                "Clarify availability and salary expectations"
+            ],
+            "interviewer_notes": [
+                "Focus on behavioral examples for soft skills assessment",
+                "Ask for specific technical examples and implementations",
+                "Pay attention to enthusiasm and cultural fit indicators"
+            ],
+            "follow_up_areas": [
+                "Technical deep-dive with team members",
+                "Reference checks with previous employers",
+                "Culture fit assessment with potential teammates"
+            ],
+            "strategy_type": "simplified_comprehensive"
+        }
+    
+    async def _create_interview_sections_from_simplified_resume(self,
+                                                             strategy: Dict[str, Any],
+                                                             simplified_resume_analysis: SimplifiedResumeAnalysis,
+                                                             job_analysis: JobDescriptionAnalysis,
+                                                             total_duration: int) -> List[SimplifiedInterviewSection]:
+        """Create structured interview sections based on simplified resume strategy."""
+        
+        sections = []
+        
+        # Calculate time allocations based on total duration
+        time_allocations = self._calculate_time_allocations(total_duration)
+        
+        # 1) Opening / Introduction
+        opening_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.OPENING,
+            section_name="Opening & Introduction",
+            description="Introduce the interview, obtain consent if applicable, build rapport, and set expectations",
+            estimated_duration_minutes=time_allocations["opening_intro"],
+            questions=[]
+        )
+        sections.append(opening_section)
+        
+        # 2) Warm-up Questions
+        warmup_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.OPENING,
+            section_name="Warm-up",
+            description="Easy, open-ended questions to help the candidate relax and provide context",
+            estimated_duration_minutes=time_allocations["warm_up"],
+            questions=[]
+        )
+        sections.append(warmup_section)
+        
+        # 3) Core Questions / Main Body (technical focus)
+        core_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.TECHNICAL,
+            section_name="Core Questions / Main Body",
+            description="Primary technical and role-related assessment; progress from broad to specific",
+            estimated_duration_minutes=time_allocations["core_main"],
+            questions=[]
+        )
+        sections.append(core_section)
+        
+        # 4) Challenging or Sensitive Topics
+        challenging_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.SITUATIONAL,
+            section_name="Challenging or Sensitive Topics",
+            description="Explore difficult constraints, failures, and risk/impact scenarios respectfully",
+            estimated_duration_minutes=time_allocations["challenging"],
+            questions=[]
+        )
+        sections.append(challenging_section)
+        
+        # 5) Closing Questions
+        closing_q_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.CLOSING,
+            section_name="Closing Questions",
+            description="Give the candidate a chance to add anything and ask questions",
+            estimated_duration_minutes=time_allocations["closing_questions"],
+            questions=[]
+        )
+        sections.append(closing_q_section)
+        
+        # 6) Wrap-up
+        wrapup_section = SimplifiedInterviewSection(
+            phase=InterviewPhase.CLOSING,
+            section_name="Wrap-up",
+            description="Thank them, explain next steps, confirm contact preferences, and close",
+            estimated_duration_minutes=time_allocations["wrap_up"],
+            questions=[]
+        )
+        sections.append(wrapup_section)
+        
+        return sections
+    
+    async def _generate_section_questions_from_simplified_resume(self,
+                                                              section: SimplifiedInterviewSection,
+                                                              strategy: Dict[str, Any],
+                                                              simplified_resume_analysis: SimplifiedResumeAnalysis,
+                                                              job_analysis: JobDescriptionAnalysis,
+                                                              previous_questions: List[str]):
+        """Generate specific questions for an interview section using simplified resume data."""
+        
+        # Build context for question generation
+        target_count = self._get_questions_target_for_section_name(section.section_name)
+
+        prev_q_block = "\n".join([f"- {q}" for q in previous_questions[-20:]]) if previous_questions else "(none)"
+
+        question_prompt = f"""CRITICAL CHARACTER RESTRICTIONS:
+- Use ONLY standard ASCII characters (A-Z, a-z, 0-9, basic punctuation)
+- DO NOT use Unicode symbols like checkmarks (✓), bullet points (•), em dashes (—), smart quotes (" "), or any special characters
+- Use simple text formatting: use "- " for bullet points, use regular quotes " and apostrophes '
+- Keep all text content compatible with basic ASCII encoding
+
+Generate {target_count} interview questions for the {section.section_name} section.
+
+SECTION DETAILS:
+- Phase: {section.phase.value}
+- Description: {section.description}
+
+CANDIDATE CONTEXT (SIMPLIFIED):
+- Technical Skills: {', '.join([skill.skill_name for skill in simplified_resume_analysis.technical_skills[:8]])}
+- Experience: {simplified_resume_analysis.total_experience_years} years
+- Key Strengths: {', '.join(simplified_resume_analysis.key_strengths[:3])}
+
+JOB CONTEXT:
+- Position: {job_analysis.job_title}
+- Key Requirements: {', '.join([req.requirement for req in job_analysis.technical_requirements[:5]])}
+- Success Factors: {', '.join(job_analysis.critical_success_factors[:3])}
+
+INTERVIEW STRATEGY:
+- Focus Areas: {', '.join(strategy['focus_areas'][:5])}
+- Areas to Probe: {', '.join(strategy.get('clarifications', [])[:3])}
+
+PREVIOUSLY PLANNED QUESTIONS (avoid repeating these):
+{prev_q_block}
+
+Generate questions that:
+1. Are appropriate for the interview phase
+2. Target the candidate's specific background
+3. Assess relevant skills for the job requirements
+4. Allow for follow-up and deeper exploration
+5. Avoid redundancy across sections
+
+Format as JSON array with objects containing: question_text"""
+        
+        try:
+            response = await asyncio.to_thread(
+                self.client.chat.completions.create,
+                model=self.config.MODEL,
+                messages=[
+                    {"role": "system", "content": f"You are an expert interview question generator specializing in {section.phase.value} questions. CRITICAL: Use ONLY standard ASCII characters - no Unicode symbols, checkmarks, bullet points, or special characters. Use simple text formatting with regular quotes and apostrophes."},
+                    {"role": "user", "content": question_prompt}
+                ],
+                max_tokens=2000,
+                temperature=0.5
+            )
+            
+            # Parse questions from response
+            questions_content = response.choices[0].message.content
+            
+            try:
+                questions_data = self._extract_json_from_response(questions_content)
+                
+                # Convert to SimplifiedQuestion objects
+                questions = []
+                for q_data in questions_data:
+                    question = SimplifiedQuestion(
+                        question_text=q_data.get("question_text", "")
+                    )
+                    # De-duplicate against previous sections
+                    if not self._is_duplicate_question(question.question_text, previous_questions):
+                        questions.append(question)
+                
+                # Limit to target count
+                section.questions = questions[:target_count]
+                
+            except Exception as e:
+                self.logger.warning(f"Failed to parse questions for {section.section_name}: {e}")
+                # Use fallback questions
+                section.questions = self._get_fallback_questions_for_section(section.section_name, target_count)
+                
+        except Exception as e:
+            self.logger.warning(f"Question generation failed for {section.section_name}: {e}")
+            # Use fallback questions
+            section.questions = self._get_fallback_questions_for_section(section.section_name, target_count)
+    
+    def _get_questions_target_for_section_name(self, section_name: str) -> int:
+        """Get target question count for section by name."""
+        return self.config.QUESTIONS_PER_SECTION_BY_NAME.get(section_name, self.config.QUESTIONS_PER_SECTION)
+    
+    def _get_fallback_questions_for_section(self, section_name: str, target_count: int) -> List[SimplifiedQuestion]:
+        """Get fallback questions for a section."""
+        fallback_questions = {
+            "Opening & Introduction": [
+                "Tell me about yourself and your background.",
+                "What interests you about this role?",
+                "Why are you looking for a new opportunity?"
+            ],
+            "Warm-up": [
+                "Can you walk me through your most recent project?",
+                "What technologies have you been working with lately?",
+                "How do you stay updated with industry trends?"
+            ],
+            "Core Questions / Main Body": [
+                "Describe a challenging technical problem you solved recently.",
+                "How do you approach debugging complex issues?",
+                "Can you explain your experience with [specific technology]?",
+                "What's your process for code review and quality assurance?",
+                "How do you handle tight deadlines and competing priorities?"
+            ],
+            "Challenging or Sensitive Topics": [
+                "Tell me about a time when a project didn't go as planned.",
+                "How do you handle disagreements with team members?",
+                "Describe a situation where you had to learn something completely new quickly."
+            ],
+            "Closing Questions": [
+                "Is there anything else you'd like to tell us about your experience?",
+                "Do you have any questions about the role or company?"
+            ],
+            "Wrap-up": [
+                "Thank you for your time today. We'll be in touch soon.",
+                "Do you have any final questions before we wrap up?"
+            ]
+        }
+        
+        questions = fallback_questions.get(section_name, ["Tell me about your experience."])
+        return [SimplifiedQuestion(question_text=q) for q in questions[:target_count]]
 
 
 # Export main class

@@ -204,7 +204,7 @@ CRITICAL INSTRUCTIONS:
 - Keep the conversation flowing naturally
 - Start with: "Tell me about your experience with microcontroller programming and which platforms you've worked with."
 
-You are a friendly, professional interviewer conducting an Electronic Engineering interview focused on Microcontroller Programming, PCB Design, and Embedded Systems."""
+You are a friendly, professional interviewer conducting a comprehensive interview to assess the candidate's technical skills, experience, and cultural fit for the role."""
     
     async def start_interview(self):
         """Start the interview with keyboard controls."""
@@ -335,8 +335,8 @@ You are a friendly, professional interviewer conducting an Electronic Engineerin
             
             # Initial greeting
             options.agent.greeting = (
-                # "Hello! Welcome to your interview. "
-                # "I'm excited to learn more about your background. "
+                "Hello! Welcome to your interview. "
+                "I'm excited to learn more about your background. "
                 "Could you please introduce yourself and tell me a bit about your experience?"
             )
             
